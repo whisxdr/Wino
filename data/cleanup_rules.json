@@ -1,0 +1,98 @@
+[
+  {
+    "id": "clean_user_temp",
+    "name": "User Temporary Files",
+    "description": "Temporary working files and installers left behind in user AppData Temp.",
+    "category": "Temporary Files",
+    "path_template": "%LOCALAPPDATA%\\Temp",
+    "glob_pattern": "*",
+    "risk": "Safe",
+    "safe_to_clean": true,
+    "min_age_hours": 24,
+    "description_benefit": "Frees up gigabytes of accumulated temporary files from old app runs."
+  },
+  {
+    "id": "clean_windows_temp",
+    "name": "Windows System Temp",
+    "description": "System-level temporary files created by Windows background tasks and updates.",
+    "category": "System Cache",
+    "path_template": "%WINDIR%\\Temp",
+    "glob_pattern": "*",
+    "risk": "Safe",
+    "safe_to_clean": true,
+    "min_age_hours": 24,
+    "description_benefit": "Recovers system drive capacity without touching running services."
+  },
+  {
+    "id": "clean_crash_dumps",
+    "name": "Application Crash Dumps",
+    "description": "Crash dump memory logs (*.dmp) created when apps terminate unexpectedly.",
+    "category": "Logs & Dumps",
+    "path_template": "%LOCALAPPDATA%\\CrashDumps",
+    "glob_pattern": "*.dmp",
+    "risk": "Safe",
+    "safe_to_clean": true,
+    "min_age_hours": 0,
+    "description_benefit": "Reclaims hundreds of megabytes of old debugging dumps."
+  },
+  {
+    "id": "clean_delivery_optimization",
+    "name": "Delivery Optimization Cache",
+    "description": "Cached Windows Update peer-to-peer download pieces.",
+    "category": "Windows Update",
+    "path_template": "%WINDIR%\\SoftwareDistribution\\DeliveryOptimization",
+    "glob_pattern": "*",
+    "risk": "Safe",
+    "safe_to_clean": true,
+    "min_age_hours": 48,
+    "description_benefit": "Safely clears peer-to-peer update cache pieces."
+  },
+  {
+    "id": "clean_update_downloads",
+    "name": "Windows Update Download Cache",
+    "description": "Installer packages downloaded for updates that have already been applied.",
+    "category": "Windows Update",
+    "path_template": "%WINDIR%\\SoftwareDistribution\\Download",
+    "glob_pattern": "*",
+    "risk": "Low",
+    "safe_to_clean": true,
+    "min_age_hours": 72,
+    "description_benefit": "Reclaims multi-gigabyte leftovers from past Windows Updates."
+  },
+  {
+    "id": "clean_directx_shader_cache",
+    "name": "DirectX / GPU Shader Cache",
+    "description": "Compiled graphics pipeline shaders. Recompiles automatically when games launch.",
+    "category": "Graphics Cache",
+    "path_template": "%LOCALAPPDATA%\\D3DSCache",
+    "glob_pattern": "*",
+    "risk": "Low",
+    "safe_to_clean": true,
+    "min_age_hours": 0,
+    "description_benefit": "Cleans corrupted or outdated graphics shader caches."
+  },
+  {
+    "id": "clean_edge_cache",
+    "name": "Microsoft Edge Web Cache",
+    "description": "Cached images, styles, and scripts from Edge browser.",
+    "category": "Browser Cache",
+    "path_template": "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\Default\\Cache\\Cache_Data",
+    "glob_pattern": "*",
+    "risk": "Safe",
+    "safe_to_clean": true,
+    "min_age_hours": 24,
+    "description_benefit": "Frees browser cache without affecting bookmarks or saved passwords."
+  },
+  {
+    "id": "clean_chrome_cache",
+    "name": "Google Chrome Web Cache",
+    "description": "Cached images, styles, and scripts from Chrome browser.",
+    "category": "Browser Cache",
+    "path_template": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Cache\\Cache_Data",
+    "glob_pattern": "*",
+    "risk": "Safe",
+    "safe_to_clean": true,
+    "min_age_hours": 24,
+    "description_benefit": "Frees browser cache without affecting bookmarks or saved passwords."
+  }
+]

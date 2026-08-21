@@ -1,0 +1,142 @@
+[
+  {
+    "service_name": "DiagTrack",
+    "display_name": "Connected User Experiences and Telemetry",
+    "description": "Collects event data about Windows diagnostics and user experience telemetry.",
+    "classification": "Safe to change",
+    "recommended_startup": "Manual",
+    "risk": "Safe",
+    "reason": "Stops ongoing telemetry upload to Microsoft diagnostic servers.",
+    "dependencies": []
+  },
+  {
+    "service_name": "dmwappushservice",
+    "display_name": "Device Management Wireless Application Protocol (WAP) Push",
+    "description": "Routes WAP push messages and telemetry for device management.",
+    "classification": "Safe to change",
+    "recommended_startup": "Manual",
+    "risk": "Safe",
+    "reason": "Rarely used on non-enterprise personal workstations.",
+    "dependencies": []
+  },
+  {
+    "service_name": "RetailDemo",
+    "display_name": "Retail Demo Service",
+    "description": "Controls device demo activity while the device is in retail demo mode in stores.",
+    "classification": "Safe to change",
+    "recommended_startup": "Disabled",
+    "risk": "Safe",
+    "reason": "Only required for in-store display models.",
+    "dependencies": []
+  },
+  {
+    "service_name": "MapsBroker",
+    "display_name": "Downloaded Maps Manager",
+    "description": "Provides access to downloaded maps by applications accessing offline map data.",
+    "classification": "Safe to change",
+    "recommended_startup": "Manual",
+    "risk": "Safe",
+    "reason": "Offline maps can start on demand rather than automatically running at boot.",
+    "dependencies": []
+  },
+  {
+    "service_name": "XblAuthManager",
+    "display_name": "Xbox Live Auth Manager",
+    "description": "Provides authentication and authorization services for interacting with Xbox Live.",
+    "classification": "Optional",
+    "recommended_startup": "Manual",
+    "risk": "Low",
+    "reason": "Can be set to Manual if not actively playing Xbox Live games.",
+    "dependencies": []
+  },
+  {
+    "service_name": "XblGameSave",
+    "display_name": "Xbox Live Game Save",
+    "description": "Syncs save data for Xbox Live save-enabled games to the cloud.",
+    "classification": "Optional",
+    "recommended_startup": "Manual",
+    "risk": "Low",
+    "reason": "Runs on demand when an Xbox game is launched.",
+    "dependencies": []
+  },
+  {
+    "service_name": "XboxNetApiSvc",
+    "display_name": "Xbox Live Networking Service",
+    "description": "Supports the Windows.Networking.XboxLive application programming interface.",
+    "classification": "Optional",
+    "recommended_startup": "Manual",
+    "risk": "Low",
+    "reason": "Only necessary when multiplayer Xbox matchmaking is active.",
+    "dependencies": []
+  },
+  {
+    "service_name": "SysMain",
+    "display_name": "SysMain (Superfetch)",
+    "description": "Maintains and improves system performance by preloading frequently used applications.",
+    "classification": "Optional",
+    "recommended_startup": "Automatic",
+    "risk": "Medium",
+    "reason": "Beneficial on most modern systems; disabling can cause slower application launches.",
+    "dependencies": []
+  },
+  {
+    "service_name": "wuauserv",
+    "display_name": "Windows Update",
+    "description": "Enables the detection, download, and installation of updates for Windows.",
+    "classification": "Do not touch",
+    "recommended_startup": "Automatic",
+    "risk": "Critical",
+    "reason": "Essential for OS security patches, Microsoft Store app updates, and driver fixes.",
+    "dependencies": ["rpcss"]
+  },
+  {
+    "service_name": "WinDefend",
+    "display_name": "Microsoft Defender Antivirus Service",
+    "description": "Helps protect users from malware and other potentially unwanted software.",
+    "classification": "Do not touch",
+    "recommended_startup": "Automatic",
+    "risk": "Critical",
+    "reason": "Core real-time malware protection engine.",
+    "dependencies": ["rpcSs", "bfe"]
+  },
+  {
+    "service_name": "RpcSs",
+    "display_name": "Remote Procedure Call (RPC)",
+    "description": "Serves as the endpoint mapper and COM Service Control Manager.",
+    "classification": "Do not touch",
+    "recommended_startup": "Automatic",
+    "risk": "Critical",
+    "reason": "Fundamental Windows kernel subsystem. Disabling causes immediate blue screen or boot failure.",
+    "dependencies": []
+  },
+  {
+    "service_name": "BFE",
+    "display_name": "Base Filtering Engine",
+    "description": "Manages firewall and Internet Protocol security (IPsec) policies.",
+    "classification": "Do not touch",
+    "recommended_startup": "Automatic",
+    "risk": "Critical",
+    "reason": "Required for Windows Firewall, VPNs, and network security packet filtering.",
+    "dependencies": ["RpcSs"]
+  },
+  {
+    "service_name": "Dhcp",
+    "display_name": "DHCP Client",
+    "description": "Registers and updates IP addresses and DNS records for this computer.",
+    "classification": "Do not touch",
+    "recommended_startup": "Automatic",
+    "risk": "Critical",
+    "reason": "Required to obtain IP addresses from routers and network gateways.",
+    "dependencies": ["NSI", "Afd"]
+  },
+  {
+    "service_name": "Dnscache",
+    "display_name": "DNS Client",
+    "description": "Caches Domain Name System (DNS) names and registers full computer name.",
+    "classification": "Do not touch",
+    "recommended_startup": "Automatic",
+    "risk": "Critical",
+    "reason": "Required for resolving domain names and internet connectivity.",
+    "dependencies": ["nsi", "tcpip"]
+  }
+]

@@ -1,0 +1,422 @@
+[
+  {
+    "id": "disable_consumer_experience",
+    "name": "Disable Windows Consumer Experience",
+    "description": "Prevents Windows from automatically downloading and installing promotional apps (Candy Crush, Disney+, Spotify stubs, etc.).",
+    "category": "apps",
+    "preset": "Safe",
+    "risk": "Safe",
+    "reversible": true,
+    "requires_admin": true,
+    "supported_windows": ["10", "11"],
+    "reason": "Reduces unwanted background app downloads and telemetry.",
+    "estimated_benefit": "Saves 200-800 MB disk space and background bandwidth.",
+    "registry_keys": [
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Windows\\CloudContent",
+        "value_name": "DisableWindowsConsumerFeatures",
+        "value_type": "DWORD",
+        "value_data": 1,
+        "restore_data": 0
+      }
+    ],
+    "package_names": [],
+    "services": []
+  },
+  {
+    "id": "disable_bing_search_start",
+    "name": "Disable Bing Web Search in Start Menu",
+    "description": "Restricts Start Menu search to local files, apps, and settings, removing web search latency and telemetry.",
+    "category": "apps",
+    "preset": "Safe",
+    "risk": "Safe",
+    "reversible": true,
+    "requires_admin": false,
+    "supported_windows": ["10", "11"],
+    "reason": "Significantly speeds up Start Menu searches and stops search queries from being sent to Bing.",
+    "estimated_benefit": "Faster local search, zero web query latency in Start Menu.",
+    "registry_keys": [
+      {
+        "hive": "HKCU",
+        "path": "Software\\Policies\\Microsoft\\Windows\\Explorer",
+        "value_name": "DisableSearchBoxSuggestions",
+        "value_type": "DWORD",
+        "value_data": 1,
+        "restore_data": 0
+      },
+      {
+        "hive": "HKCU",
+        "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Search",
+        "value_name": "BingSearchEnabled",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      }
+    ],
+    "package_names": [],
+    "services": []
+  },
+  {
+    "id": "disable_advertising_id",
+    "name": "Disable Advertising ID Tracking",
+    "description": "Disables unique advertising identifier used by apps to track user behavior across applications.",
+    "category": "privacy",
+    "preset": "Safe",
+    "risk": "Safe",
+    "reversible": true,
+    "requires_admin": false,
+    "supported_windows": ["10", "11"],
+    "reason": "Protects user privacy by denying ad tracking identifiers.",
+    "estimated_benefit": "Improved privacy, zero personalized ad profile generation.",
+    "registry_keys": [
+      {
+        "hive": "HKCU",
+        "path": "Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo",
+        "value_name": "Enabled",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      }
+    ],
+    "package_names": [],
+    "services": []
+  },
+  {
+    "id": "remove_promotional_apps",
+    "name": "Remove Preinstalled Promotional UWP Apps",
+    "description": "Removes non-essential preinstalled app packages (Feedback Hub, Solitaire, Tips, Get Help, News).",
+    "category": "apps",
+    "preset": "Safe",
+    "risk": "Safe",
+    "reversible": true,
+    "requires_admin": false,
+    "supported_windows": ["10", "11"],
+    "reason": "Eliminates preinstalled bloat apps that consume background CPU and storage.",
+    "estimated_benefit": "Recovers ~300-600 MB disk space and reduces background task churn.",
+    "registry_keys": [],
+    "package_names": [
+      "Microsoft.BingNews",
+      "Microsoft.BingWeather",
+      "Microsoft.GetHelp",
+      "Microsoft.Getstarted",
+      "Microsoft.MicrosoftFeedbackHub",
+      "Microsoft.MicrosoftSolitaireCollection",
+      "Microsoft.People",
+      "Microsoft.Todos"
+    ],
+    "services": []
+  },
+  {
+    "id": "disable_telemetry_diagnostics",
+    "name": "Set Diagnostic Data to Basic Level",
+    "description": "Sets Windows diagnostic telemetry to the minimum required level without breaking Windows Update.",
+    "category": "telemetry",
+    "preset": "Safe",
+    "risk": "Safe",
+    "reversible": true,
+    "requires_admin": true,
+    "supported_windows": ["10", "11"],
+    "reason": "Minimizes unnecessary operating system usage metric collection.",
+    "estimated_benefit": "Reduces disk I/O and background network data transmission.",
+    "registry_keys": [
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Windows\\DataCollection",
+        "value_name": "AllowTelemetry",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      },
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Windows\\DataCollection",
+        "value_name": "MaxTelemetryAllowed",
+        "value_type": "DWORD",
+        "value_data": 1,
+        "restore_data": 3
+      }
+    ],
+    "package_names": [],
+    "services": [
+      "DiagTrack"
+    ]
+  },
+  {
+    "id": "disable_start_app_suggestions",
+    "name": "Disable Start Menu App Suggestions",
+    "description": "Prevents Windows from displaying recommended and suggested promotional apps in Start Menu.",
+    "category": "apps",
+    "preset": "Safe",
+    "risk": "Safe",
+    "reversible": true,
+    "requires_admin": false,
+    "supported_windows": ["10", "11"],
+    "reason": "Keeps the Start Menu clean and free of third-party promotional recommendations.",
+    "estimated_benefit": "Cleaner Start Menu with zero recommended ads.",
+    "registry_keys": [
+      {
+        "hive": "HKCU",
+        "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+        "value_name": "SystemPaneSuggestionsEnabled",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      }
+    ],
+    "package_names": [],
+    "services": []
+  },
+  {
+    "id": "disable_widgets_feed",
+    "name": "Disable Windows 11 Widgets Feed",
+    "description": "Disables the Windows 11 Widgets news feed (Windows Web Experience Pack) background tasks.",
+    "category": "features",
+    "preset": "Balanced",
+    "risk": "Low",
+    "reversible": true,
+    "requires_admin": true,
+    "supported_windows": ["11"],
+    "reason": "Widgets feed spawns multiple WebView2 processes consuming 150-300 MB of idle RAM.",
+    "estimated_benefit": "Saves 150-300 MB RAM and prevents continuous MSN news syncing.",
+    "registry_keys": [
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Dsh",
+        "value_name": "AllowNewsAndInterests",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      }
+    ],
+    "package_names": [],
+    "services": []
+  },
+  {
+    "id": "disable_copilot_prompts",
+    "name": "Disable Windows Copilot Integration",
+    "description": "Disables the Windows Copilot side panel and Taskbar icon.",
+    "category": "features",
+    "preset": "Balanced",
+    "risk": "Low",
+    "reversible": true,
+    "requires_admin": true,
+    "supported_windows": ["11"],
+    "reason": "Prevents Copilot web rendering background services if unused.",
+    "estimated_benefit": "Saves background memory and cleans up Taskbar.",
+    "registry_keys": [
+      {
+        "hive": "HKCU",
+        "path": "Software\\Policies\\Microsoft\\Windows\\WindowsCopilot",
+        "value_name": "TurnOffWindowsCopilot",
+        "value_type": "DWORD",
+        "value_data": 1,
+        "restore_data": 0
+      },
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Windows\\WindowsCopilot",
+        "value_name": "TurnOffWindowsCopilot",
+        "value_type": "DWORD",
+        "value_data": 1,
+        "restore_data": 0
+      }
+    ],
+    "package_names": [],
+    "services": []
+  },
+  {
+    "id": "disable_xbox_services_optional",
+    "name": "Disable Xbox Live & Game Bar Services (Non-Gamers)",
+    "description": "Sets Xbox Live auth, save, and network services to Manual startup. Does not delete Xbox components.",
+    "category": "services",
+    "preset": "Balanced",
+    "risk": "Low",
+    "reversible": true,
+    "requires_admin": true,
+    "supported_windows": ["10", "11"],
+    "reason": "Stops idle Xbox background services on workstations not used for Xbox gaming.",
+    "estimated_benefit": "Reduces 4 background services and saves 20-50 MB idle RAM.",
+    "registry_keys": [],
+    "package_names": [],
+    "services": [
+      "XblAuthManager",
+      "XblGameSave",
+      "XboxNetApiSvc",
+      "XboxGipSvc"
+    ]
+  },
+  {
+    "id": "disable_cortana_background",
+    "name": "Disable Cortana Background Launcher",
+    "description": "Disables Cortana voice assistant background initialization and startup hook.",
+    "category": "features",
+    "preset": "Balanced",
+    "risk": "Low",
+    "reversible": true,
+    "requires_admin": true,
+    "supported_windows": ["10", "11"],
+    "reason": "Cortana is superseded in modern Windows versions; disabling background hooks frees resources.",
+    "estimated_benefit": "Saves 30-60 MB memory and removes background voice trigger listener.",
+    "registry_keys": [
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Windows\\Windows Search",
+        "value_name": "AllowCortana",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      }
+    ],
+    "package_names": [],
+    "services": []
+  },
+  {
+    "id": "disable_edge_prelaunch",
+    "name": "Disable Microsoft Edge Startup Boost & Pre-launch",
+    "description": "Prevents Microsoft Edge from running standby background processes at Windows login.",
+    "category": "performance",
+    "preset": "Balanced",
+    "risk": "Low",
+    "reversible": true,
+    "requires_admin": true,
+    "supported_windows": ["10", "11"],
+    "reason": "Stops Edge from consuming 100-250 MB RAM on boot when user uses other browsers.",
+    "estimated_benefit": "Recovers 100-250 MB RAM at startup and reduces boot time.",
+    "registry_keys": [
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Edge",
+        "value_name": "StartupBoostEnabled",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      },
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Edge",
+        "value_name": "BackgroundModeEnabled",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      }
+    ],
+    "package_names": [],
+    "services": []
+  },
+  {
+    "id": "remove_oem_bloatware_stubs",
+    "name": "Remove OEM Support Stubs & Preinstalled Promos",
+    "description": "Removes 3rd-party preinstalled vendor stubs (Spotify, Disney+, TikTok, Instagram, Prime Video stubs).",
+    "category": "oem",
+    "preset": "Aggressive",
+    "risk": "Medium",
+    "reversible": true,
+    "requires_admin": false,
+    "supported_windows": ["10", "11"],
+    "reason": "Eliminates factory preinstalled OEM promotional app stubs.",
+    "estimated_benefit": "Recovers storage space and removes unwanted start menu entries.",
+    "registry_keys": [],
+    "package_names": [
+      "SpotifyAB.SpotifyMusic",
+      "Amazon.PrimeVideo",
+      "Bytedance.TikTok",
+      "Facebook.Instagram",
+      "Disney.37853FC22B2CE"
+    ],
+    "services": []
+  },
+  {
+    "id": "disable_location_sensors",
+    "name": "Disable Windows Location Tracking Service",
+    "description": "Disables background geolocation sensor service (lfsvc) and location history.",
+    "category": "privacy",
+    "preset": "Aggressive",
+    "risk": "Medium",
+    "reversible": true,
+    "requires_admin": true,
+    "supported_windows": ["10", "11"],
+    "reason": "Desktop workstations rarely need continuous GPS location querying.",
+    "estimated_benefit": "Saves background service overhead and prevents location tracking.",
+    "registry_keys": [
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Windows\\LocationAndSensors",
+        "value_name": "DisableLocation",
+        "value_type": "DWORD",
+        "value_data": 1,
+        "restore_data": 0
+      }
+    ],
+    "package_names": [],
+    "services": [
+      "lfsvc"
+    ]
+  },
+  {
+    "id": "disable_activity_history",
+    "name": "Disable Activity History & Timeline Cloud Sync",
+    "description": "Stops Windows from recording launched apps, opened documents, and browsing history to cloud Timeline.",
+    "category": "privacy",
+    "preset": "Aggressive",
+    "risk": "Medium",
+    "reversible": true,
+    "requires_admin": true,
+    "supported_windows": ["10", "11"],
+    "reason": "Eliminates continuous user activity indexing and cloud synchronization.",
+    "estimated_benefit": "Reduces disk writes and prevents activity tracking.",
+    "registry_keys": [
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Windows\\System",
+        "value_name": "EnableActivityFeed",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      },
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Windows\\System",
+        "value_name": "PublishUserActivities",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      },
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Windows\\System",
+        "value_name": "UploadUserActivities",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      }
+    ],
+    "package_names": [],
+    "services": []
+  },
+  {
+    "id": "disable_feedback_prompts",
+    "name": "Disable Windows Feedback Frequency Prompts",
+    "description": "Sets Windows feedback survey prompt frequency to 'Never'.",
+    "category": "privacy",
+    "preset": "Aggressive",
+    "risk": "Medium",
+    "reversible": true,
+    "requires_admin": false,
+    "supported_windows": ["10", "11"],
+    "reason": "Prevents Windows from interrupting the user with feedback survey dialogs.",
+    "estimated_benefit": "Zero feedback survey interruptions.",
+    "registry_keys": [
+      {
+        "hive": "HKCU",
+        "path": "Software\\Microsoft\\Siuf\\Rules",
+        "value_name": "NumberOfSIUFInPeriod",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      }
+    ],
+    "package_names": [],
+    "services": []
+  }
+]

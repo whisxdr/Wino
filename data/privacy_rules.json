@@ -1,0 +1,158 @@
+[
+  {
+    "id": "privacy_advertising_id",
+    "name": "Advertising ID",
+    "description": "Prevents apps from using your advertising ID for tailored experiences across apps.",
+    "category": "Privacy",
+    "risk": "Safe",
+    "reversible": true,
+    "requires_admin": false,
+    "supported_windows": ["10", "11"],
+    "reason": "Prevents building cross-application advertising profiles.",
+    "impact": "No personalized ads in Store apps; general ads may still show without tracking.",
+    "registry_keys": [
+      {
+        "hive": "HKCU",
+        "path": "Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo",
+        "value_name": "Enabled",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      }
+    ]
+  },
+  {
+    "id": "privacy_activity_history",
+    "name": "Activity History Collection",
+    "description": "Stops Windows from collecting user activity history (app usage, file openings, web browsing).",
+    "category": "Privacy",
+    "risk": "Safe",
+    "reversible": true,
+    "requires_admin": true,
+    "supported_windows": ["10", "11"],
+    "reason": "Prevents timeline and activity tracking from being sent to cloud accounts.",
+    "impact": "Timeline/Task View past activities across devices will not sync.",
+    "registry_keys": [
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Windows\\System",
+        "value_name": "EnableActivityFeed",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      },
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Windows\\System",
+        "value_name": "PublishUserActivities",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      },
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Windows\\System",
+        "value_name": "UploadUserActivities",
+        "value_type": "DWORD",
+        "value_data": 0,
+        "restore_data": 1
+      }
+    ]
+  },
+  {
+    "id": "privacy_tailored_experiences",
+    "name": "Tailored Experiences with Diagnostic Data",
+    "description": "Stops Microsoft from using diagnostic data to show personalized recommendations, ads, and tips.",
+    "category": "Privacy",
+    "risk": "Safe",
+    "reversible": true,
+    "requires_admin": false,
+    "supported_windows": ["10", "11"],
+    "reason": "Disables personalized marketing suggestions inside Windows Settings and Notification center.",
+    "impact": "Windows will not offer tips or product suggestions based on your usage.",
+    "registry_keys": [
+      {
+        "hive": "HKCU",
+        "path": "Software\\Policies\\Microsoft\\Windows\\CloudContent",
+        "value_name": "DisableTailoredExperiencesWithDiagnosticData",
+        "value_type": "DWORD",
+        "value_data": 1,
+        "restore_data": 0
+      }
+    ]
+  },
+  {
+    "id": "privacy_inking_typing_personalization",
+    "name": "Inking and Typing Personalization",
+    "description": "Disables sending your typing and handwriting dictionary data to Microsoft cloud servers.",
+    "category": "Privacy",
+    "risk": "Safe",
+    "reversible": true,
+    "requires_admin": false,
+    "supported_windows": ["10", "11"],
+    "reason": "Prevents keystroke and handwriting samples from leaving the local machine.",
+    "impact": "Custom personal dictionary learning will remain local only.",
+    "registry_keys": [
+      {
+        "hive": "HKCU",
+        "path": "Software\\Microsoft\\InputPersonalization",
+        "value_name": "RestrictImplicitInkCollection",
+        "value_type": "DWORD",
+        "value_data": 1,
+        "restore_data": 0
+      },
+      {
+        "hive": "HKCU",
+        "path": "Software\\Microsoft\\InputPersonalization",
+        "value_name": "RestrictImplicitTextCollection",
+        "value_type": "DWORD",
+        "value_data": 1,
+        "restore_data": 0
+      }
+    ]
+  },
+  {
+    "id": "privacy_feedback_frequency",
+    "name": "Feedback Frequency",
+    "description": "Disables periodic feedback prompts requesting ratings or questionnaires.",
+    "category": "Privacy",
+    "risk": "Safe",
+    "reversible": true,
+    "requires_admin": true,
+    "supported_windows": ["10", "11"],
+    "reason": "Eliminates intrusive feedback notifications.",
+    "impact": "Windows will never prompt 'How likely are you to recommend Windows 11?'.",
+    "registry_keys": [
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Windows\\DataCollection",
+        "value_name": "DoNotShowFeedbackNotifications",
+        "value_type": "DWORD",
+        "value_data": 1,
+        "restore_data": 0
+      }
+    ]
+  },
+  {
+    "id": "privacy_location_tracking",
+    "name": "System-wide Location Tracking",
+    "description": "Disables Windows location tracking services when geolocation is not needed.",
+    "category": "Privacy",
+    "risk": "Low",
+    "reversible": true,
+    "requires_admin": true,
+    "supported_windows": ["10", "11"],
+    "reason": "Prevents apps and OS from querying device GPS/Wi-Fi positioning.",
+    "impact": "Weather app and Maps will require manual city entry.",
+    "registry_keys": [
+      {
+        "hive": "HKLM",
+        "path": "Software\\Policies\\Microsoft\\Windows\\LocationAndSensors",
+        "value_name": "DisableLocation",
+        "value_type": "DWORD",
+        "value_data": 1,
+        "restore_data": 0
+      }
+    ]
+  }
+]
