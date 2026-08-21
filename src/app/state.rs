@@ -50,6 +50,8 @@ pub struct AppState {
     pub debloat_filter_preset: String,
     pub toast_message: Option<(String, Instant)>,
     pub last_event: Option<RecentEvent>,
+    pub cpu_history: Vec<f32>,
+    pub ram_history: Vec<f32>,
     pub last_fast_poll: Instant,
     pub last_slow_poll: Instant,
 }
@@ -64,10 +66,14 @@ impl AppState {
         let initial_event = RecentEvent {
             timestamp: Local::now().format("%H:%M:%S").to_string(),
             category: "System".to_string(),
-            message: "Wino engine initialized and ready".to_string(),
+            message: "Wino Pro Engine initialized and ready".to_string(),
             is_success: true,
             created_at: Instant::now(),
         };
+
+        // Initialize with default history samples
+        let initial_cpu = vec![10.0, 15.0, 12.0, 25.0, 40.0, 35.0, 50.0, 20.0, 30.0, 15.0, 10.0, 12.0, 18.0, 25.0, 20.0, 14.0];
+        let initial_ram = vec![45.0; 16];
 
         Self {
             config,
@@ -90,6 +96,8 @@ impl AppState {
             debloat_filter_preset: "All".to_string(),
             toast_message: None,
             last_event: Some(initial_event),
+            cpu_history: initial_cpu,
+            ram_history: initial_ram,
             last_fast_poll: Instant::now(),
             last_slow_poll: Instant::now(),
         }
@@ -142,6 +150,17 @@ impl AppState {
                 gpu_vram_used_bytes: gpu.shared_system_memory_bytes,
                 process_count: ram.process_count,
             };
+
+            // Update sliding history buffers (keep up to 24 samples)
+            self.cpu_history.push(cpu);
+            if self.cpu_history.len() > 24 {
+                self.cpu_history.remove(0);
+            }
+
+            self.ram_history.push(ram.usage_pct);
+            if self.ram_history.len() > 24 {
+                self.ram_history.remove(0);
+            }
 
             self.memory_details = capture_memory_snapshot();
             ctx.request_repaint_after(std::time::Duration::from_millis(500));

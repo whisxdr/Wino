@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use windows::core::PCWSTR;
 use windows::Win32::Foundation::ERROR_SUCCESS;
 use windows::Win32::System::Registry::{RegCloseKey, RegOpenKeyExW, RegQueryValueExW, HKEY, HKEY_LOCAL_MACHINE, KEY_READ, REG_SZ};
-use windows::Win32::System::SystemInformation::{GetNativeSystemInfo, SYSTEM_INFO};
+use windows::Win32::System::SystemInformation::{GetNativeSystemInfo, GetTickCount64, SYSTEM_INFO};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemInfo {
@@ -10,6 +10,7 @@ pub struct SystemInfo {
     pub display_version: String,
     pub build_number: String,
     pub architecture: String,
+    pub processor_name: String,
     pub processor_count: u32,
     pub total_ram_bytes: u64,
     pub is_windows_11: bool,
@@ -35,6 +36,7 @@ impl SystemInfo {
         };
 
         let processor_count = sys_info.dwNumberOfProcessors;
+        let processor_name = read_processor_name_registry();
 
         let total_ram_bytes = crate::monitoring::ram::get_total_ram_bytes();
         let is_admin = crate::core::permissions::is_admin();
@@ -44,10 +46,38 @@ impl SystemInfo {
             display_version,
             build_number,
             architecture,
+            processor_name,
             processor_count,
             total_ram_bytes,
             is_windows_11,
             is_admin,
+        }
+    }
+
+    pub fn get_uptime_formatted(&self) -> String {
+        let uptime_secs = unsafe { GetTickCount64() } / 1000;
+        let days = uptime_secs / 86400;
+        let hours = (uptime_secs % 86400) / 3600;
+        let minutes = (uptime_secs % 3600) / 60;
+        if days > 0 {
+            format!("{}d {:02}h {:02}m", days, hours, minutes)
+        } else {
+            format!("{:02}h {:02}m", hours, minutes)
+        }
+    }
+}
+
+fn read_processor_name_registry() -> String {
+    let subkey_wide: Vec<u16> = "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0\0".encode_utf16().collect();
+    let mut hkey = HKEY::default();
+
+    unsafe {
+        if RegOpenKeyExW(HKEY_LOCAL_MACHINE, PCWSTR(subkey_wide.as_ptr()), 0, KEY_READ, &mut hkey) == ERROR_SUCCESS {
+            let name = read_reg_string(hkey, "ProcessorNameString").unwrap_or_else(|| "Windows Compatible Processor".to_string());
+            let _ = RegCloseKey(hkey);
+            name
+        } else {
+            "Windows Compatible Processor".to_string()
         }
     }
 }

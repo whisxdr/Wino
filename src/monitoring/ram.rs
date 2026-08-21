@@ -8,6 +8,8 @@ pub struct RamStats {
     pub used_bytes: u64,
     pub available_bytes: u64,
     pub cached_bytes: u64,
+    pub paged_pool_bytes: u64,
+    pub nonpaged_pool_bytes: u64,
     pub commit_used_bytes: u64,
     pub commit_limit_bytes: u64,
     pub usage_pct: f32,
@@ -56,6 +58,18 @@ pub fn get_ram_stats() -> RamStats {
             0
         };
 
+        let paged_pool_bytes = if perf_ok {
+            (perf_info.KernelPaged as u64) * page_size
+        } else {
+            0
+        };
+
+        let nonpaged_pool_bytes = if perf_ok {
+            (perf_info.KernelNonpaged as u64) * page_size
+        } else {
+            0
+        };
+
         let commit_used_bytes = if perf_ok {
             (perf_info.CommitTotal as u64) * page_size
         } else {
@@ -68,17 +82,25 @@ pub fn get_ram_stats() -> RamStats {
             mem_status.ullTotalPageFile
         };
 
+        let (process_count, handle_count, thread_count) = if perf_ok {
+            (perf_info.ProcessCount as usize, perf_info.HandleCount, perf_info.ThreadCount)
+        } else {
+            (0, 0, 0)
+        };
+
         RamStats {
             total_bytes,
             used_bytes,
             available_bytes,
             cached_bytes,
+            paged_pool_bytes,
+            nonpaged_pool_bytes,
             commit_used_bytes,
             commit_limit_bytes,
             usage_pct,
-            process_count: if perf_ok { perf_info.ProcessCount as usize } else { 0 },
-            handle_count: if perf_ok { perf_info.HandleCount } else { 0 },
-            thread_count: if perf_ok { perf_info.ThreadCount } else { 0 },
+            process_count,
+            handle_count,
+            thread_count,
         }
     }
 }

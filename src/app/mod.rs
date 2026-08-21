@@ -7,7 +7,7 @@ pub mod views;
 use crate::app::navigation::NavTab;
 use crate::app::state::AppState;
 use crate::app::theme::get_colors;
-use eframe::egui::{self, Color32, Frame, Margin, RichText, Rounding, Sense, Stroke};
+use eframe::egui::{self, Frame, Margin, RichText, Rounding, Sense, Stroke};
 
 pub struct WinoApp {
     pub state: AppState,
@@ -33,14 +33,14 @@ impl eframe::App for WinoApp {
         theme::apply_theme(ctx, &self.state.config.general.theme);
         let colors = get_colors(ctx.style().visuals.dark_mode);
 
-        // 1. Bottom Status & Live Event Bar (Footer across entire window)
+        // 1. Bottom Status & Live Event Bar (Footer across entire window matching Wino Pro)
         egui::TopBottomPanel::bottom("wino_bottom_bar")
-            .exact_height(34.0)
+            .exact_height(32.0)
             .frame(
                 Frame::none()
-                    .fill(colors.bg_panel)
+                    .fill(colors.bg_footer)
                     .stroke(Stroke::new(1.0_f32, colors.border))
-                    .inner_margin(Margin::symmetric(14.0, 6.0)),
+                    .inner_margin(Margin::symmetric(16.0, 5.0)),
             )
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
@@ -51,7 +51,7 @@ impl eframe::App for WinoApp {
                     ui.label(RichText::new("●").size(10.0).color(colors.success));
                     ui.label(
                         RichText::new(format!(
-                            "{} ({}) | CPU: {:.1}% | RAM: {:.1}% | {} Procs",
+                            "Wino Pro Engine • {} ({}) | CPU: {:.1}% | RAM: {:.1}% | {} Procs",
                             win_tag,
                             admin_tag,
                             self.state.metrics.cpu_usage_pct,
@@ -76,7 +76,7 @@ impl eframe::App for WinoApp {
                         };
 
                         let pill_bg = if is_recent {
-                            Color32::from_rgba_unmultiplied(colors.accent.r(), colors.accent.g(), colors.accent.b(), 35)
+                            colors.accent_glow
                         } else {
                             colors.bg_card
                         };
@@ -91,7 +91,7 @@ impl eframe::App for WinoApp {
                             .fill(pill_bg)
                             .stroke(pill_stroke)
                             .rounding(Rounding::same(12.0))
-                            .inner_margin(Margin::symmetric(10.0, 3.0))
+                            .inner_margin(Margin::symmetric(10.0, 2.5))
                             .show(ui, |ui| {
                                 ui.horizontal(|ui| {
                                     if is_recent {
@@ -103,8 +103,8 @@ impl eframe::App for WinoApp {
                                         ui.label(RichText::new(&event_time).size(10.0).color(colors.text_muted));
                                     }
                                     ui.label(
-                                        RichText::new(if event_text.len() > 50 {
-                                            format!("{}...", &event_text[..47])
+                                        RichText::new(if event_text.len() > 46 {
+                                            format!("{}...", &event_text[..43])
                                         } else {
                                             event_text
                                         })
@@ -125,23 +125,29 @@ impl eframe::App for WinoApp {
                 });
             });
 
-        // 2. Left Navigation Sidebar
+        // 2. Left Navigation Sidebar (240px matching Wino Pro)
         egui::SidePanel::left("wino_sidebar")
             .resizable(false)
-            .exact_width(215.0)
+            .exact_width(240.0)
             .frame(
                 Frame::none()
                     .fill(colors.bg_panel)
                     .stroke(Stroke::new(1.0_f32, colors.border))
-                    .inner_margin(Margin::same(8.0)),
+                    .inner_margin(Margin::same(10.0)),
             )
             .show(ctx, |ui| {
                 navigation::render_sidebar(ui, &mut self.state);
             });
 
         // 3. Main Central Panel View
-        egui::CentralPanel::default().show(ctx, |ui| {
-            views::render_active_view(ui, &mut self.state);
-        });
+        egui::CentralPanel::default()
+            .frame(
+                Frame::none()
+                    .fill(colors.bg_canvas)
+                    .inner_margin(Margin::same(16.0)),
+            )
+            .show(ctx, |ui| {
+                views::render_active_view(ui, &mut self.state);
+            });
     }
 }

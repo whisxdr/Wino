@@ -10,7 +10,7 @@
 
 **A modern, transparent, ultra-low-footprint Windows optimizer designed with safety, stability, and zero placebo as primary principles.**
 
-[Architecture Guide](ARCHITECTURE.md) • [Contributing](CONTRIBUTING.md) • [Features](#-feature-matrix) • [CLI Reference](#-cli-usage) • [Building](#-building-from-source)
+[UI Guide (Screenshots)](docs/UI_GUIDE.md) • [Architecture Guide](ARCHITECTURE.md) • [Contributing](CONTRIBUTING.md) • [Features](#-feature-matrix) • [CLI Reference](#-cli-usage) • [Building](#-building-from-source)
 
 </div>
 

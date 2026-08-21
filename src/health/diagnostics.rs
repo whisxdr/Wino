@@ -39,6 +39,9 @@ impl SystemHealthRating {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemHealthReport {
     pub rating: SystemHealthRating,
+    pub defender_active: bool,
+    pub firewall_active: bool,
+    pub pending_reboot: bool,
     pub issues: Vec<String>,
     pub recommendations: Vec<String>,
 }
@@ -52,12 +55,16 @@ pub fn evaluate_system_health() -> SystemHealthReport {
     let mut issues = Vec::new();
     let mut recommendations = Vec::new();
 
-    if !sec.defender_enabled {
+    let defender_active = sec.defender_enabled;
+    let firewall_active = sec.firewall_enabled;
+    let pending_reboot = upd.pending_reboot;
+
+    if !defender_active {
         issues.push("Real-time antivirus protection is turned off.".to_string());
         recommendations.push("Enable Microsoft Defender Antivirus in Windows Security.".to_string());
     }
 
-    if upd.pending_reboot {
+    if pending_reboot {
         issues.push("System restart pending for Windows Update installation.".to_string());
         recommendations.push("Restart the computer to complete updates.".to_string());
     }
@@ -82,22 +89,23 @@ pub fn evaluate_system_health() -> SystemHealthReport {
         MemoryPressure::Low => {}
     }
 
-    let rating = if mem.pressure == MemoryPressure::Critical || !sec.defender_enabled {
+    let rating = if mem.pressure == MemoryPressure::Critical || !defender_active {
+        SystemHealthRating::Critical
+    } else if mem.pressure == MemoryPressure::High || pending_reboot {
         SystemHealthRating::Warning
-    } else if mem.pressure == MemoryPressure::High || upd.pending_reboot {
+    } else if !issues.is_empty() {
         SystemHealthRating::Attention
-    } else if !issues.is_empty() || mem.pressure == MemoryPressure::Moderate {
+    } else if mem.pressure == MemoryPressure::Moderate {
         SystemHealthRating::Good
     } else {
         SystemHealthRating::Excellent
     };
 
-    if recommendations.is_empty() {
-        recommendations.push("No critical system changes required. Your system is healthy.".to_string());
-    }
-
     SystemHealthReport {
         rating,
+        defender_active,
+        firewall_active,
+        pending_reboot,
         issues,
         recommendations,
     }
