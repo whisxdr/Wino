@@ -1,0 +1,67 @@
+name: Release Wino
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: x86_64-pc-windows-msvc
+
+      - name: Build Release Binary
+        run: cargo build --release
+
+      - name: Run Test Suite
+        run: cargo test
+
+      - name: Prepare Portable ZIP Archive
+        shell: pwsh
+        run: |
+          $tag = if ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } else { "v0.1.0" }
+          New-Item -ItemType Directory -Force -Path "dist/Wino" | Out-Null
+          Copy-Item "target/release/wino.exe" -Destination "dist/Wino/"
+          Copy-Item "README.md" -Destination "dist/Wino/"
+          Copy-Item "LICENSE" -Destination "dist/Wino/"
+          Copy-Item "ARCHITECTURE.md" -Destination "dist/Wino/"
+          Compress-Archive -Path "dist/Wino/*" -DestinationPath "dist/Wino-$tag-windows-x64-portable.zip" -Force
+
+      - name: Build Inno Setup Installer
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+        with:
+          path: installer/wino_setup.iss
+
+      - name: Generate SHA256 Checksums
+        shell: pwsh
+        run: |
+          Set-Location dist
+          $files = Get-ChildItem -File -Filter "*.zip", "*.exe"
+          foreach ($f in $files) {
+              $hash = (Get-FileHash -Path $f.FullName -Algorithm SHA256).Hash
+              "$hash  $($f.Name)" | Out-File -Append -Encoding utf8 checksums.sha256
+          }
+          Get-Content checksums.sha256
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip
+            dist/*.exe
+            dist/checksums.sha256
+          draft: false
+          prerelease: false
+          generate_release_notes: true
