@@ -43,11 +43,11 @@ impl NavTab {
         match self {
             NavTab::Dashboard => "⊞",
             NavTab::Memory => "⚡",
-            NavTab::Processes => "▤",
-            NavTab::Debloat => "✦",
-            NavTab::Startup => "▲",
+            NavTab::Processes => "≡",
+            NavTab::Debloat => "🧹",
+            NavTab::Startup => "🚀",
             NavTab::Services => "⚙",
-            NavTab::Privacy => "🔒",
+            NavTab::Privacy => "🛡",
             NavTab::Cleaner => "🗑",
             NavTab::Gaming => "🎮",
             NavTab::Health => "✚",
@@ -61,15 +61,15 @@ impl NavTab {
 pub fn render_sidebar(ui: &mut Ui, state: &mut AppState) {
     let colors = get_colors(ui.visuals().dark_mode);
 
-    ui.add_space(8.0);
+    ui.add_space(6.0);
 
     // Sidebar Header / Brand
     ui.horizontal(|ui| {
-        ui.add_space(10.0);
+        ui.add_space(8.0);
         ui.label(RichText::new("WINO").size(20.0).strong().color(colors.accent));
         ui.label(RichText::new("PRO").size(10.0).color(colors.text_muted));
     });
-    ui.add_space(10.0);
+    ui.add_space(8.0);
 
     let tabs = [
         NavTab::Dashboard,
@@ -119,13 +119,13 @@ pub fn render_sidebar(ui: &mut Ui, state: &mut AppState) {
                             ui.horizontal(|ui| {
                                 // Dedicated fixed-width icon slot so it never overlaps or clips
                                 ui.allocate_ui_with_layout(
-                                    Vec2::new(20.0, 18.0),
+                                    Vec2::new(22.0, 18.0),
                                     egui::Layout::left_to_right(egui::Align::Center),
                                     |ui| {
                                         ui.label(RichText::new(tab.icon()).size(14.0).color(icon_color).strong());
                                     },
                                 );
-                                ui.add_space(6.0);
+                                ui.add_space(4.0);
                                 ui.label(
                                     RichText::new(tab.title())
                                         .size(13.0)

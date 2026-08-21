@@ -49,6 +49,45 @@ pub fn get_colors(is_dark: bool) -> FluentColors {
     }
 }
 
+pub fn configure_fonts(ctx: &egui::Context) {
+    let mut fonts = egui::FontDefinitions::default();
+
+    // 1. Windows Native Segoe UI Font
+    if let Ok(font_data) = std::fs::read("C:\\Windows\\Fonts\\segoeui.ttf") {
+        fonts.font_data.insert(
+            "segoe_ui".to_owned(),
+            egui::FontData::from_owned(font_data),
+        );
+        if let Some(family) = fonts.families.get_mut(&egui::FontFamily::Proportional) {
+            family.insert(0, "segoe_ui".to_owned());
+        }
+    }
+
+    // 2. Windows Segoe UI Symbol Font (Rich Fluent Glyphs & UI Symbols)
+    if let Ok(sym_data) = std::fs::read("C:\\Windows\\Fonts\\seguisym.ttf") {
+        fonts.font_data.insert(
+            "segoe_sym".to_owned(),
+            egui::FontData::from_owned(sym_data),
+        );
+        if let Some(family) = fonts.families.get_mut(&egui::FontFamily::Proportional) {
+            family.push("segoe_sym".to_owned());
+        }
+    }
+
+    // 3. Windows Segoe MDL2 Assets Font
+    if let Ok(mdl_data) = std::fs::read("C:\\Windows\\Fonts\\segmdl2.ttf") {
+        fonts.font_data.insert(
+            "segoe_mdl2".to_owned(),
+            egui::FontData::from_owned(mdl_data),
+        );
+        if let Some(family) = fonts.families.get_mut(&egui::FontFamily::Proportional) {
+            family.push("segoe_mdl2".to_owned());
+        }
+    }
+
+    ctx.set_fonts(fonts);
+}
+
 pub fn apply_theme(ctx: &egui::Context, theme_name: &str) {
     let is_dark = theme_name != "light";
     let colors = get_colors(is_dark);

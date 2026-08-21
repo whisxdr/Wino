@@ -14,7 +14,10 @@ pub struct WinoApp {
 }
 
 impl WinoApp {
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        // Configure native Windows Segoe UI and Segoe UI Symbol fonts for crisp glyph rendering
+        theme::configure_fonts(&cc.egui_ctx);
+
         Self {
             state: AppState::new(),
         }
@@ -125,7 +128,7 @@ impl eframe::App for WinoApp {
         // 2. Left Navigation Sidebar
         egui::SidePanel::left("wino_sidebar")
             .resizable(false)
-            .exact_width(210.0)
+            .exact_width(215.0)
             .frame(
                 Frame::none()
                     .fill(colors.bg_panel)
