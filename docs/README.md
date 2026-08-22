@@ -1,22 +1,16 @@
-# 📚 Wino Local Documentation
+# Wino Local Docs
 
-Selamat datang di direktori dokumentasi lokal **Wino** (*Windows Debloater, Optimizer & Memory Suite*).
+You find all docs in this folder. You need no internet. You read them offline.
 
-Seluruh dokumen dan aset media dalam folder ini bersifat **100% lokal** dan dapat dibaca secara offline tanpa memerlukan koneksi internet maupun GitHub.
+## Guides
 
----
-
-## 📑 Panduan Tersedia
-
-| Dokumen | Deskripsi |
+| Doc | What you get |
 | :--- | :--- |
-| 🖼️ **[Panduan Visual UI & Screenshot Menu](./UI_GUIDE.md)** | Dokumentasi lengkap seluruh 13 menu GUI Wino disertai screenshot beresolusi tinggi lokal, penjelasan fungsi tombol, metrik, dan cara penggunaan. |
-| 🏛️ **[Architecture Guide](../ARCHITECTURE.md)** | Dokumentasi arsitektur sistem native Win32, model threading, keamanan kernel, dan benchmark performa. |
-| 🤝 **[Contributing Guidelines](../CONTRIBUTING.md)** | Panduan kontribusi, standardisasi kode Rust, pengujian, dan tata cara pembuatan modul baru. |
+| [UI Guide](./UI_GUIDE.md) | You see 16 menus with local screenshots. You learn each button, metric, and step. |
+| [Architecture Guide](../ARCHITECTURE.md) | You see the Win32 stack, threading, and safety model. |
+| [Contributing Guide](../CONTRIBUTING.md) | You see how you add rules, tag risk, and ship a PR. |
 
----
+## Assets
 
-## 📁 Direktori Aset Lokal
-
-- [`docs/screenshots/`](./screenshots/): Berisi 13 berkas gambar PNG representasi visual semua menu UI Wino.
-- [`scripts/capture.ps1`](../scripts/capture.ps1): Skrip otomatisasi untuk memperbarui seluruh tangkapan layar jika ada perubahan UI.
+- `docs/screenshots/`: You see 16 PNG files. Each file shows one menu.
+- `scripts/capture.ps1`: You run it to refresh all screenshots after a UI change.

@@ -1,282 +1,235 @@
-# 📖 Dokumentasi Visual Antarmuka (UI) Wino
+# UI Guide: Wino
 
-Dokumentasi lengkap antarmuka pengguna (**User Interface / GUI**) untuk aplikasi **Wino — Rust-Native Windows Debloater, Optimizer & Memory Suite**.
+You see each menu here. You get a screenshot from `docs/screenshots/` and you learn what you click.
 
-Semua aset gambar tangkapan layar (**screenshots**) pada dokumen ini tersimpan secara lokal pada folder [`docs/screenshots/`](./screenshots/) dan tidak bergantung pada hosting eksternal maupun GitHub.
-
----
-
-## 📑 Daftar Isi Menu
-
-1. [⊞ Dashboard (Sistem Telemetri & Kesehatan)](#1--dashboard-system-telemetry--health)
-2. [⚡ Memory Engine (Manajemen Tekanan RAM)](#2--memory-engine-ram-management)
-3. [≡ Process Manager (Inspektor Proses Aktif)](#3--process-manager)
-4. [🧹 Windows Debloater (Pembersih Paket Bloatware)](#4--windows-debloater--optimizer)
-5. [🚀 Startup Applications (Optimasi Boot & Startup)](#5--startup-applications)
-6. [⚙ Windows Services (Manajemen Layanan Windows)](#6--windows-services)
-7. [🛡 Privacy Center (Pusat Privasi & Telemetri)](#7--privacy-center)
-8. [🗑 Storage Cleaner (Pembersih File Sementara & Sampah)](#8--storage-cleaner)
-9. [🎮 Gaming Profile (Mode Gaming & Latensi Rendah)](#9--gaming-profile)
-10. [✚ Windows Health (Diagnostik SFC & DISM)](#10--windows-health-diagnostics)
-11. [↺ Restore & Safety Snapshots (Titik Pemulihan & Rollback)](#11--restore--safety-snapshots)
-12. [📋 Audit & Event Logs (Catatan Riwayat Eksekusi)](#12--audit--event-logs)
-13. [🔧 Settings & Preferences (Pengaturan Tema & Hak Akses)](#13--settings--preferences)
-14. [🖱 Context Menu Cleaner (Pembersih Klik Kanan Windows Explorer)](#14--context-menu-cleaner)
-15. [🌐 DNS & Network Optimizer (Optimasi Jaringan & Flush DNS)](#15--dns--network-optimizer)
-16. [⏱ Scheduled Tasks (Manajemen Tugas Terjadwal Windows)](#16--scheduled-tasks)
+All images live in your repo. You need no external host.
 
 ---
 
-## 1. ⊞ Dashboard (System Telemetry & Health)
+## Contents
+
+1. [Dashboard](#1--dashboard)
+2. [Memory Engine](#2--memory-engine)
+3. [Process Manager](#3--process-manager)
+4. [Debloater](#4--windows-debloater)
+5. [Startup Apps](#5--startup-applications)
+6. [Services](#6--windows-services)
+7. [Privacy Center](#7--privacy-center)
+8. [Storage Cleaner](#8--storage-cleaner)
+9. [Gaming Profile](#9--gaming-profile)
+10. [Windows Health](#10--windows-health)
+11. [Restore and Snapshots](#11--restore--snapshots)
+12. [Audit Logs](#12--audit--logs)
+13. [Settings](#13--settings)
+14. [Context Menu](#14--context-menu-cleaner)
+15. [DNS and Network](#15--dns--network)
+16. [Scheduled Tasks](#16--scheduled-tasks)
+
+---
+
+## 1. Dashboard
 
 ![System Dashboard](./screenshots/01_dashboard.png)
 
-### 📌 Fungsi Utama
-Halaman utama yang menampilkan ringkasan telemetri perangkat keras secara *real-time* dan status kesehatan sistem operasi Windows secara keseluruhan.
+**What you do here:** You track the health of your Windows install in one view.
 
-### 🔍 Fitur & Komponen UI
-- **Grafik Penggunaan CPU**: Menampilkan beban kerja prosesor secara langsung beserta jumlah *logical core*.
-- **System Health & Recommendations**: Sistem penilaian otomatis (`EXCELLENT`, `GOOD`, `ATTENTION`, `WARNING`, `CRITICAL`) beserta saran tindakan proaktif jika terdapat fitur keamanan atau sistem yang belum optimal.
-- **Host Information**: Ringkasan versi Windows (Win 10/11, Build version), kartu grafis / GPU Adapter aktif, serta jumlah proses yang sedang berjalan.
-- **Footer Status Bar**: Indikator status privileges (`Admin` / `User`), beban CPU/RAM, dan *live event ticker*.
+- You read CPU load and logical cores.
+- You read a health score: `EXCELLENT`, `GOOD`, `ATTENTION`, `WARNING`, `CRITICAL`. You act on the tip.
+- You see host info: Windows build, GPU, process count.
+- You check the footer: admin status, CPU and RAM load, and live events.
 
 ---
 
-## 2. ⚡ Memory Engine (RAM Management)
+## 2. Memory Engine
 
 ![Memory Engine](./screenshots/02_memory_engine.png)
 
-### 📌 Fungsi Utama
-Analisis mendalam konsumsi RAM fisik, cache sistem, commit charge, dan mitigasi tekanan memori (*memory pressure*) tanpa *placebo*.
+**What you do here:** You see how Windows uses RAM. You cut pressure without placebo.
 
-### 🔍 Fitur & Komponen UI
-- **Physical Memory Utilization Bar**: Visualisasi penggunaan RAM aktif vs memori yang tersedia (*Available Memory*) dan Standby Cache.
-- **Committed Memory**: Memantau batas alokasi virtual memory yang dijamin oleh sistem / paging file.
-- **Memory Pressure Badge**: Klasifikasi tingkat tekanan RAM (`LOW`, `MODERATE`, `HIGH`, `CRITICAL`).
-- **Optimize Memory Now**: Mengeksekusi pemangkasan *working set* proses latar belakang yang tidak aktif menggunakan API native Win32 `EmptyWorkingSet`.
-- **Simulate (Dry-Run)**: Menghitung estimasi RAM yang dapat dibebaskan tanpa melakukan modifikasi langsung.
+- You read a bar for active RAM, free RAM, and standby cache.
+- You read commit charge and the pressure badge: `LOW`, `MODERATE`, `HIGH`, `CRITICAL`.
+- You click `Optimize Memory Now` to trim idle sets with `EmptyWorkingSet`.
+- You click `Simulate` to estimate reclaim before you change anything.
 
 ---
 
-## 3. ≡ Process Manager
+## 3. Process Manager
 
 ![Process Manager](./screenshots/03_processes.png)
 
-### 📌 Fungsi Utama
-Inspektor proses yang berjalan pada sistem dengan verifikasi tanda tangan digital (*Authenticode Digital Signatures*) dan manajemen pemakaian memori per proses.
+**What you do here:** You inspect running processes and you verify who signed them.
 
-### 🔍 Fitur & Komponen UI
-- **Search Bar**: Pencarian cepat instan berdasarkan nama proses atau PID.
-- **Kolom Detail**: Menampilkan Nama Proses, PID, Working Set (RAM), dan Status Verifikasi Penerbit (`Verified Signed` / `Unverified`).
-- **End Task Action**: Menghentikan proses yang membebani memori secara aman.
-- **Proteksi Kernel**: Proses esensial sistem Windows terlindungi otomatis dari penghentian yang tidak disengaja.
+- You search by name or PID.
+- You read PID, working set, and publisher (`Verified Signed` or `Unverified`).
+- You end a heavy process or you trim its working set. Wino blocks critical system tasks.
 
 ---
 
-## 4. 🧹 Windows Debloater & Optimizer
+## 4. Windows Debloater
 
 ![Windows Debloater & Optimizer](./screenshots/04_debloat.png)
 
-### 📌 Fungsi Utama
-Menghapus bloatware bawaan Windows, aplikasi promosi OEM, pelacak iklan, serta menonaktifkan fitur latar belakang yang memboroskan daya dan bandwidth.
+**What you do here:** You remove bloat, promos, and trackers. You pick a preset that fits your risk.
 
-### 🔍 Fitur & Komponen UI
-- **Preset Pilihan Cepat**:
-  - `Safe (6 rules)`: Rekomendasi untuk semua pengguna (bebas risiko & 100% *reversible*).
-  - `Balanced (11 rules)`: Termasuk Safe + mematikan Windows 11 Widgets (hemat ~200MB RAM), Copilot, Edge startup boost.
-  - `Aggressive (15 rules)`: Pembersihan mendalam aplikasi OEM (TikTok, Disney, Spotify stubs), sensor lokasi, dsb.
-- **Status Indikator**: Menandai aturan yang sudah `Optimized` atau `Default`.
-- **Filter View & Search**: Menyaring daftar aturan berdasarkan kategori atau kata kunci.
-- **Dry-Run & Konfirmasi Modal**: Pratinjau sebelum eksekusi dan dialog konfirmasi untuk preset berisiko lebih tinggi.
+- `Safe (6 rules)`: You remove bloat like Solitaire and Tips. You turn off Bing in Start and ad ID. You break nothing.
+- `Balanced (11 rules)`: You get Safe plus you turn off Widgets feed, Copilot, Edge boost, and idle Xbox. You save ~200 MB.
+- `Aggressive (15 rules)`: You remove OEM stubs (TikTok, Disney, Spotify) and you turn off location and timeline sync.
+- You see `Optimized` or `Default` for each rule. You preview with Dry-Run and you confirm before you apply Balanced or Aggressive.
 
 ---
 
-## 5. 🚀 Startup Applications
+## 5. Startup Applications
 
 ![Startup Applications](./screenshots/05_startup_apps.png)
 
-### 📌 Fungsi Utama
-Memindai dan mengelola program yang otomatis berjalan saat komputer menyala untuk mempercepat waktu *boot* dan meringankan beban *idle*.
+**What you do here:** You trim what runs at boot.
 
-### 🔍 Fitur & Komponen UI
-- **Pendeteksian Multi-Lokasi**: Memindai Registry `HKCU\Run`, `HKLM\Run`, serta folder Startup pengguna dan publik.
-- **Startup Impact Rating**: Memberikan bobot pengaruh terhadap waktu boot (`High Impact`, `Medium Impact`, `Low Impact`).
-- **Disable / Enable Toggle**: Mematikan aplikasi startup yang tidak diperlukan dengan sekali klik tanpa merusak instalasi aplikasi aslinya.
+- You scan `HKCU\Run`, `HKLM\Run`, and Startup folders.
+- You read impact: `High`, `Medium`, `Low`.
+- You toggle an app off. You keep the install intact.
 
 ---
 
-## 6. ⚙ Windows Services
+## 6. Windows Services
 
 ![Windows Services](./screenshots/06_services.png)
 
-### 📌 Fungsi Utama
-Memeriksa dan mengatur tipe *startup* layanan latar belakang Windows dengan klasifikasi keamanan yang ketat.
+**What you do here:** You tune background services with a safety net.
 
-### 🔍 Fitur & Komponen UI
-- **Klasifikasi Keamanan**:
-  - `Safe to change` (Hijau): Layanan non-esensial (misal: Telemetri DiagTrack, MapsBroker).
-  - `Optional` (Kuning): Layanan yang aman disesuaikan tergantung kebutuhan pengguna.
-  - `Do not touch` (Merah): Layanan inti sistem yang dilindungi oleh mesin safety Wino.
-- **Aksi Cepat**: Mengubah mode startup layanan menjadi `Demand / Manual` atau `Disabled`.
-- **Live Search**: Pencarian instan di antara ratusan service Windows yang terpasang.
+- You read safety tags: `Safe to change`, `Optional`, `Do not touch`. Red means core. You leave it alone.
+- You set a service to `Manual` or `Disabled`.
+- You search across hundreds of services.
 
 ---
 
-## 7. 🛡 Privacy Center
+## 7. Privacy Center
 
 ![Privacy Center](./screenshots/07_privacy_center.png)
 
-### 📌 Fungsi Utama
-Mengendalikan pengaturan privasi Windows, telemetri diagnostik, riwayat aktivitas, dan pelacakan iklan pengguna.
+**What you do here:** You lock down tracking.
 
-### 🔍 Fitur & Komponen UI
-- **Advertising ID**: Memblokir identifikasi profil pengguna untuk iklan lintas aplikasi.
-- **Activity History Collection**: Mencegah Windows mencatat riwayat pembukaan file dan navigasi aplikasi ke cloud.
-- **Tailored Experiences & Feedback**: Mematikan penawaran rekomendasi dan kuesioner otomatis Microsoft.
-- **Inking & Typing Personalization**: Memastikan data ketikan dan penulisan tetap berada di perangkat lokal.
-- **Badge Status & Tombol Revert**: Menampilkan status `Protected` dan opsi untuk mengembalikan pengaturan kapan saja.
+- You turn off Ad ID.
+- You stop activity history and cloud sync.
+- You turn off tailored offers and feedback prompts.
+- You keep `Protected` status and you revert when you want.
 
 ---
 
-## 8. 🗑 Storage Cleaner
+## 8. Storage Cleaner
 
 ![Storage Cleaner](./screenshots/08_storage_cleaner.png)
 
-### 📌 Fungsi Utama
-Pembersihan aman file sampah sementara, *crash dumps*, cache instalasi, dan cache shader GPU tanpa menghapus file pribadi pengguna.
+**What you do here:** You reclaim disk without touching personal files.
 
-### 🔍 Fitur & Komponen UI
-- **Kalkulator Ruang Terpulihkan**: Menghitung total GB/MB yang dapat dibebaskan sebelum tindakan dilakukan.
-- **Target Aman**:
-  - `User Temporary Files` (`%TEMP%` & `C:\Windows\Temp`)
-  - `DirectX / GPU Shader Cache`
-  - `Windows Delivery Optimization Cache`
-  - `Crash Dumps & Error Reports`
-- **Filter Umur Berkas**: Dilengkapi aturan keamanan umur file agar tidak menghapus file sementara yang sedang aktif digunakan program.
+- You see reclaimable size in MB or GB before you clean.
+- You target `Temp`, `Windows Temp`, shader cache, Delivery Optimization cache, crash dumps.
+- You rely on age filter. You skip files that apps still hold.
 
 ---
 
-## 9. 🎮 Gaming Profile
+## 9. Gaming Profile
 
 ![Gaming Profile](./screenshots/09_gaming_profile.png)
 
-### 📌 Fungsi Utama
-Mengoptimalkan sistem operasi untuk sesi bermain game dengan memprioritaskan alokasi CPU/GPU dan meminimalkan latensi latar belakang.
+**What you do here:** You prep Windows for a game.
 
-### 🔍 Fitur & Komponen UI
-- **Windows Game Mode**: Memastikan penjadwalan proses game mendapatkan prioritas utama thread CPU dan GPU.
-- **Optimize for Gaming**: Melakukan pembersihan RAM seketika sebelum meluncurkan game.
-- **Prinsip Zero-Placebo**: Tidak melakukan modifikasi berbahaya pada registri atau *timer resolution hack* yang dapat menyebabkan *blue screen* (BSOD).
+- You turn on Game Mode. You give the game thread priority.
+- You trim RAM before you launch.
+- You skip risky hacks. You avoid timer tweaks that crash.
 
 ---
 
-## 10. ✚ Windows Health Diagnostics
+## 10. Windows Health
 
 ![Windows Health Diagnostics](./screenshots/10_windows_health.png)
 
-### 📌 Fungsi Utama
-Pemeriksaan integritas file sistem Windows dan perbaikan *component store* secara terpadu.
+**What you do here:** You check system integrity.
 
-### 🔍 Fitur & Komponen UI
-- **Overall System Health Rating**: Penilaian kesehatan sistem seketika.
-- **SFC Scan Runner (`sfc /scannow`)**: Memeriksa dan memulihkan file sistem Windows yang rusak atau korup.
-- **DISM Health Check**: Memeriksa dan memperbaiki citra komponen Windows (*Windows Component Store*).
+- You read the health rating.
+- You run `sfc /scannow` to fix system files.
+- You run DISM to repair the component store.
 
 ---
 
-## 11. ↺ Restore & Safety Snapshots
+## 11. Restore and Snapshots
 
 ![Restore & Safety Snapshots](./screenshots/11_restore_points.png)
 
-### 📌 Fungsi Utama
-Manajemen titik pemulihan konfigurasi (*snapshots*) dan integrasi Windows System Restore Point untuk keamanan maksimal saat melakukan optimasi.
+**What you do here:** You save state before you change it. You undo with one click.
 
-### 🔍 Fitur & Komponen UI
-- **Otomatisasi Pre-Flight Snapshot**: Wino otomatis mencatat *snapshot* konfigurasi sebelum mengeksekusi optimasi batch.
-- **Create Manual Snapshot**: Pembuatan snapshot konfigurasi kapan saja sesuai keinginan pengguna.
-- **1-Click Restore**: Mengembalikan konfigurasi yang telah diubah ke kondisi semula secara instan dan aman.
+- Wino saves a snapshot before you run a batch.
+- You create a snapshot by hand when you want.
+- You click `Restore` to write old registry and service values back.
 
 ---
 
-## 12. 📋 Audit & Event Logs
+## 12. Audit and Event Logs
 
 ![Audit & Event Logs](./screenshots/12_audit_logs.png)
 
-### 📌 Fungsi Utama
-Log sirkuler dalam memori yang mencatat seluruh operasi sistem, pemindaian, perubahan konfigurasi, dan peringatan secara kronologis.
+**What you do here:** You see what ran, when, and what failed.
 
-### 🔍 Fitur & Komponen UI
-- **Level Tag Berwarna**: Badge jelas untuk `INFO`, `WARN`, dan `ERROR`.
-- **Target Kategori**: Pengelompokan log berdasarkan modul (`System`, `Security`, `Memory`, `Cleaner`, `Debloat`, dll.).
-- **Clear Logs**: Tombol untuk mengosongkan riwayat log dari memori aplikasi.
+- You read color tags: `INFO`, `WARN`, `ERROR`.
+- You filter by `System`, `Memory`, `Debloat`, `Cleaner`, and more.
+- You clear the buffer when you want a fresh view.
 
 ---
 
-## 13. 🔧 Settings & Preferences
+## 13. Settings
 
 ![Settings & Preferences](./screenshots/13_settings.png)
 
-### 📌 Fungsi Utama
-Pengaturan tema antarmuka pengguna, preferensi aplikasi, dan pengelolaan hak akses eksekusi.
+**What you do here:** You set theme and rights.
 
-### 🔍 Fitur & Komponen UI
-- **Appearance & Theme**: Pilihan tema Fluent `Dark` atau `Light`.
-- **Execution Privileges**: Menampilkan status elevasi hak akses (`Standard User` atau `Administrator`).
-- **Restart as Administrator**: Opsi 1-klik untuk memulai ulang Wino dengan hak akses Administrator ketika dibutuhkan untuk modifikasi registri tingkat dalam.
-- **About Wino**: Informasi versi rilis, arsitektur native Rust, dan lisensi open source.
-- **Memory Auto-Trim**: Konfigurasi ambang batas otomatisasi pembersihan RAM saat sistem berada di bawah tekanan.
+- You pick `Dark` or `Light`.
+- You see `Standard User` or `Administrator`.
+- You click `Restart as Administrator` when you need to edit protected keys.
+- You set auto-trim threshold for RAM pressure.
 
 ---
 
-## 14. 🖱 Context Menu Cleaner
+## 14. Context Menu Cleaner
 
 ![Context Menu Cleaner](./screenshots/14_context_menu.png)
 
-### 📌 Fungsi Utama
-Memindai, menginspeksi, dan menonaktifkan item menu klik kanan Windows Explorer yang lambat atau tidak diinginkan (*Shell Extensions* dan *Context Menu Handlers*).
+**What you do here:** You trim slow right-click entries.
 
-### 🔍 Fitur & Komponen UI
-- **Pencarian Top-Anchored**: Kotak pencarian di bagian atas dengan counter jumlah handler yang terdaftar.
-- **Deteksi CLSID & DLL**: Mengidentifikasi DLL target penerbit dan lokasi modul pada registry.
-- **Disable / Enable Non-Destructive**: Menonaktifkan ekstensi menu tanpa merusak registry asli, dengan opsi pengembalian 1-klik.
+- You search handlers and you count them.
+- You see CLSID, DLL path, and publisher.
+- You turn an entry off. You turn it back on when you need it.
 
 ---
 
-## 15. 🌐 DNS & Network Optimizer
+## 15. DNS and Network
 
 ![DNS & Network Optimizer](./screenshots/15_network_dns.png)
 
-### 📌 Fungsi Utama
-Optimasi konektivitas jaringan Windows, manajemen preset DNS privat/cepat, dan pembersihan cache DNS resolver native.
+**What you do here:** You fix DNS and you inspect adapters.
 
-### 🔍 Fitur & Komponen UI
-- **Native Flush DNS Cache**: Pembersihan cache resolver instan via Win32 `DnsFlushResolverCache` tanpa membuka subprocess CMD / PowerShell.
-- **DNS Presets 1-Click**: Pilihan preset teruji (*Cloudflare 1.1.1.1*, *Google DNS 8.8.8.8*, *Quad9 Security*, *AdGuard DNS*, *DHCP Automatic*).
-- **Network Adapter Inspector**: Menampilkan adapter jaringan aktif, status koneksi, dan alamat IP / DNS yang sedang digunakan.
+- You flush cache with `DnsFlushResolverCache`. You spawn no CMD.
+- You pick a preset: Cloudflare, Google, Quad9, AdGuard, or DHCP auto.
+- You view active adapter, IP, and current DNS.
 
 ---
 
-## 16. ⏱ Scheduled Tasks
+## 16. Scheduled Tasks
 
 ![Scheduled Tasks](./screenshots/16_scheduled_tasks.png)
 
-### 📌 Fungsi Utama
-Mengelola tugas terjadwal Windows (*Windows Task Scheduler*) yang sering kali dibuat oleh aplikasi pihak ketiga untuk telemetri atau autoupdate yang memboroskan resource latar belakang.
+**What you do here:** You stop tasks that waste background time.
 
-### 🔍 Fitur & Komponen UI
-- **Pencarian Tugas**: Menyaring tugas berdasarkan nama, path, atau deskripsi.
-- **Rekomendasi Keamanan**: Tag badge indikator (*Safe to disable*, *Optional*, *System essential*).
-- **Toggle Status**: Mengaktifkan atau menonaktifkan trigger tugas terjadwal secara instan.
+- You search by name, path, or desc.
+- You read tags: `Safe to disable`, `Optional`, `System essential`.
+- You toggle the trigger on or off.
 
 ---
 
-## 🛠 Cara Memperbarui Screenshot Secara Otomatis
+## Refresh Screenshots
 
-Jika terdapat pembaruan tampilan antarmuka di masa mendatang, seluruh screenshot di atas dapat diperbarui secara otomatis menggunakan skrip lokal berikut:
+You change the UI. You run:
 
 ```powershell
-# Jalankan skrip otomasi capture screenshot
 powershell -ExecutionPolicy Bypass -File scripts\capture.ps1
 ```
 
-Skrip ini akan mengompilasi alat otomasi capture, menjalankan setiap tab secara berurutan, mengambil frame gambar beresolusi tinggi, dan menyimpannya langsung ke folder `docs/screenshots/` dalam format `.png`.
+You compile the capture tool. You open each tab. You save fresh PNGs to `docs/screenshots/`.

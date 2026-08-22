@@ -1,46 +1,47 @@
 # Contributing to Wino
 
-Thank you for your interest in improving **Wino**!
+You want to make Wino better. Follow these rules so you keep Wino safe, stable, and light.
 
-Wino is built with an uncompromising focus on **Safety → Stability → Transparency → Low Resource Usage → Performance**.
-
----
-
-## 1. Ground Rules for Contributions
-
-Before submitting a Pull Request, please ensure your changes adhere to these non-negotiable guidelines:
-
-1. **Zero Placebo**: We do not accept fake RAM flushes, registry hacks with unverified claims, or timer resolution manipulations.
-2. **Reversibility**: Every optimization or rule must have a corresponding, exact rollback / restore value defined.
-3. **Risk Level Classification**: Every rule must be classified with a precise `RiskLevel` (`Safe`, `Low`, `Medium`, `High`, `Critical`).
-4. **Zero-PowerShell Subprocesses**: Never invoke `powershell.exe` for scanning or basic queries. Use direct Win32 APIs, Windows Registry bindings, or Windows Service Control Manager APIs.
-5. **No Breaking Changes to Windows Core**: Critical kernel services (`RpcSs`, `WinDefend`, `wuauserv`, `DcomLaunch`) must remain strictly protected.
+Wino puts safety first, then stability, then transparency, then low resource use, then speed.
 
 ---
 
-## 2. Adding New Rules
+## 1. Ground Rules
 
-Rules are declaratively defined as JSON files in the `data/` directory:
+You submit a PR when you meet these rules:
 
-- `data/debloat_rules.json`: AppX packages, feature toggles, and promotional stubs.
-- `data/service_rules.json`: Windows services descriptions, recommendations, and safety ratings.
-- `data/privacy_rules.json`: Diagnostic telemetry and privacy policies.
-- `data/cleanup_rules.json`: Safe disk cleaner paths and file extensions.
+1. **Zero Placebo**: You skip fake RAM flushes, unverified registry hacks, and timer tweaks. You ship only changes with measured gain.
+2. **Reversible**: You define a revert value for each rule. You test the revert.
+3. **Risk Tag**: You tag each rule with `RiskLevel`: `Safe`, `Low`, `Medium`, `High`, `Critical`. You pick the right level for the change.
+4. **Zero PowerShell**: You call Win32, Registry, or Service Control Manager. You never spawn `powershell.exe` for a scan or query.
+5. **Guard Core**: You leave `RpcSs`, `WinDefend`, `wuauserv`, and `DcomLaunch` alone. Wino blocks changes to those.
 
-### Example Rule Schema (`data/debloat_rules.json`):
+---
+
+## 2. Add a New Rule
+
+You keep rules as JSON in `data/`:
+
+- `data/debloat_rules.json`: AppX, feature toggles, and promo stubs.
+- `data/service_rules.json`: Service info and safety tag.
+- `data/privacy_rules.json`: Telemetry and privacy toggles.
+- `data/cleanup_rules.json`: Cleaner paths and extensions.
+
+### Example Rule (`data/debloat_rules.json`)
+
 ```json
 {
   "id": "disable_example_feature",
   "name": "Disable Example Unnecessary Background Task",
-  "description": "Explains exactly what this toggle modifies in plain English.",
+  "description": "Explains what this toggle changes in plain English.",
   "category": "features",
   "preset": "Safe",
   "risk": "Safe",
   "reversible": true,
   "requires_admin": true,
   "supported_windows": ["10", "11"],
-  "reason": "Technical rationale explaining why disabling this saves resources.",
-  "estimated_benefit": "Saves 50 MB idle RAM and reduces background disk churn.",
+  "reason": "Why this save matters: you cut background work and disk use.",
+  "estimated_benefit": "You save ~50 MB idle RAM and you cut disk churn.",
   "registry_keys": [
     {
       "hive": "HKLM",
@@ -56,32 +57,36 @@ Rules are declaratively defined as JSON files in the `data/` directory:
 }
 ```
 
+You fill `description` and `reason` in plain words. You name the benefit in MB or seconds when you can.
+
 ---
 
-## 3. Development Workflow
+## 3. Dev Workflow
 
 ```powershell
-# 1. Verify code formatting and linting
+# 1. Format and lint
 cargo fmt --check
 cargo clippy
 
-# 2. Run all unit and integration tests
+# 2. Run tests (8 unit and integration tests)
 cargo test
 
-# 3. Ensure clean compilation in release mode
+# 3. Build release
 cargo build --release
 ```
 
+You run all three before you push.
+
 ---
 
-## 4. Submitting a Pull Request
+## 4. Open a Pull Request
 
-1. Fork the repository and create your branch from `main`:
+1. You fork `whisxdr/Wino` and you branch from `main`:
    ```powershell
    git checkout -b feature/my-enhancement
    ```
-2. Commit your changes with a descriptive commit message:
+2. You commit with a clear message:
    ```powershell
-   git commit -m "Add telemetry rule for Windows Widgets background indexing"
+   git commit -m "Add rule to turn off Widgets feed"
    ```
-3. Push to your fork and submit a Pull Request to `whisxdr/Wino`.
+3. You push to your fork and you open a PR against `main`. You describe what you changed, why, and how you tested the revert.

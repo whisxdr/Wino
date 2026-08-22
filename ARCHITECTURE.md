@@ -1,12 +1,12 @@
-# Wino — System Architecture & Design Specification
+# Wino: System Architecture and Design
 
-This document provides an exhaustive overview of the internal architecture, design principles, security policies, and performance engineering of **Wino** (`whisxdr/Wino`).
+You build Wino on a modular, zero-PowerShell stack. Each call passes a safety check before it touches the OS.
 
 ---
 
-## 1. High-Level Architecture Overview
+## 1. High-Level Architecture
 
-Wino is designed around a modular, zero-PowerShell, multi-layered architecture where every system interaction flows through dedicated validation and safety engines before touching OS primitives.
+You route UI and CLI through the same core engine. You poll telemetry, you gate risk, and you hit Win32. No PowerShell spawns sit in the path.
 
 ```mermaid
 graph TD
@@ -42,81 +42,84 @@ graph TD
 
 ---
 
-## 2. Core Architectural Pillars
+## 2. Core Pillars
 
-### 2.1 The Zero-PowerShell Subprocess Guarantee
-Traditional Windows optimizers often invoke heavy PowerShell child processes (e.g. `powershell.exe -Command "Get-AppxPackage"`) for every single query or toggle. Each PowerShell subprocess consumes 80–150 MB RAM and incurs a 500–2,000 ms initialization overhead.
+### 2.1 Zero-PowerShell Guarantee
 
-Wino strictly replaces slow shell subprocesses with direct native Win32 C-FFI / Registry bindings:
+Traditional optimizers spawn PowerShell for each query. A spawn like `powershell.exe -Command "Get-AppxPackage"` costs 80 to 150 MB and 500 to 2,000 ms to start. You pay that cost for each toggle.
 
-| Operation | Legacy PowerShell Method | Wino Native Win32 Method | Latency Improvement |
+Wino replaces that spawn with native Win32 C-FFI and Registry calls. You call the API. You get the value. You skip the shell.
+
+| Operation | Legacy PowerShell Method | Wino Native Method | Latency Improvement |
 | :--- | :--- | :--- | :--- |
-| **AppX Package Query** | `Get-AppxPackage` via PowerShell | `RegEnumKeyExW` on `HKLM\Software\...\AppxAllUserStore` | **5,000 ms → 2.6 ms** (1,900x faster) |
-| **Defender Status Query** | `(Get-MpComputerStatus).RealTimeProtection` | Registry query on `HKLM\SOFTWARE\Microsoft\Windows Defender` | **3,000 ms → 2.9 ms** (1,034x faster) |
-| **Memory Working Set Trim** | PowerShell script loops | Direct `EmptyWorkingSet` via `psapi.dll` | **1,000 ms → 11.7 ms** (85x faster) |
-| **Service Status & Config** | `Get-Service` / `Set-Service` | Native Windows Service Control Manager (`OpenSCManagerW`) | **800 ms → 1.2 ms** (660x faster) |
+| **AppX Package Query** | `Get-AppxPackage` via PowerShell | `RegEnumKeyExW` on `HKLM\Software\...\AppxAllUserStore` | **5,000 ms to 2.6 ms** (1,900x faster) |
+| **Defender Status Query** | `(Get-MpComputerStatus).RealTimeProtection` | Registry query on `HKLM\SOFTWARE\Microsoft\Windows Defender` | **3,000 ms to 2.9 ms** (1,034x faster) |
+| **Memory Working Set Trim** | PowerShell script loops | `EmptyWorkingSet` via `psapi.dll` | **1,000 ms to 11.7 ms** (85x faster) |
+| **Service Status & Config** | `Get-Service` / `Set-Service` | Service Control Manager (`OpenSCManagerW`) | **800 ms to 1.2 ms** (660x faster) |
 
-### 2.2 Process Subsystem & Standalone Window Routing
-- Compiled with `#![windows_subsystem = "windows"]` to prevent any annoying black console window when launching the desktop app.
-- For CLI commands (e.g., `wino scan`), Wino dynamically detects the parent console via `AttachConsole(ATTACH_PARENT_PROCESS)` and routes standard output through `CONOUT$`.
+### 2.2 Process Subsystem and Console Routing
+
+You compile with `#![windows_subsystem = "windows"]`. You launch the GUI and you see no black console.
+
+For CLI (`wino scan`) you attach to the parent console. You call `AttachConsole(ATTACH_PARENT_PROCESS)` and you write to `CONOUT$`. You reuse the same binary for GUI and CLI.
 
 ---
 
-## 3. Module Breakdown & Directory Structure
+## 3. Module Breakdown
 
 ```
 d:/Kuliah/Coding/WinOptim/
-├── data/                       # Declarative Rule Databases (JSON)
-│   ├── debloat_rules.json      # Categorized debloat targets & registry keys
-│   ├── service_rules.json      # Windows service descriptions & safety classifications
-│   ├── privacy_rules.json      # Privacy telemetry toggles & paths
-│   └── cleanup_rules.json      # Safe storage cleaner target specifications
+├── data/                       # Rule databases (JSON)
+│   ├── debloat_rules.json      # Debloat targets and registry keys
+│   ├── service_rules.json      # Service descriptions and safety tags
+│   ├── privacy_rules.json      # Privacy toggles and paths
+│   └── cleanup_rules.json      # Cleaner targets
 ├── src/
-│   ├── main.rs                 # Process entry point, console attachment & GUI bootstrap
-│   ├── lib.rs                  # Library root exposing all functional modules
-│   ├── app/                    # GUI Layer (Immediate mode via eframe/egui)
-│   │   ├── mod.rs              # App struct, event status footer, side navigation layout
-│   │   ├── state.rs            # Central AppState, reactive polling ticks, event recorder
-│   │   ├── theme.rs            # Fluent theme palette, visuals, and native Windows Segoe fonts
-│   │   ├── navigation.rs       # Sidebar tab buttons with dedicated 22px icon slots
-│   │   ├── components.rs       # Reusable UI widgets: metric cards, badges, section headers
-│   │   └── views/              # 13 dedicated view modules (Dashboard, Memory, Debloat, etc.)
-│   ├── core/                   # Foundation layer
-│   │   ├── config.rs           # TOML configuration serialization
-│   │   ├── executor.rs         # Safe Win32 execution engine (Registry, Commands, Dry-run)
-│   │   ├── logger.rs           # Circular in-memory audit log buffer
-│   │   ├── safety.rs           # Risk gating engine (Safe, Low, Medium, High, Critical)
-│   │   └── system.rs           # OS version, build, processor architecture, admin detection
-│   ├── memory/                 # Advanced memory monitoring and working set optimization
-│   │   ├── pressure.rs         # Multi-metric RAM pressure calculation
-│   │   ├── optimizer.rs        # Working set trimming with critical process exclusion
-│   │   ├── monitor.rs          # Kernel memory pools, standby lists, commit charge
-│   │   └── compression.rs      # Windows Memory Compression query
-│   ├── debloat/                # Windows Debloating engine
-│   │   ├── rules.rs            # JSON rule deserializer and preset hierarchies
-│   │   ├── scanner.rs          # Real-time state scanner (Applied vs Pending)
-│   │   ├── executor.rs         # Preset execution with confirmation gating
-│   │   └── packages.rs         # Fast native Win32 AppX registry scanner
-│   ├── services/               # Windows Service Control Manager integration
-│   │   ├── manager.rs          # Native SCManager startup type & state modifier
-│   │   └── scanner.rs          # Service enumeration with dependency tracking
-│   ├── startup/                # Startup items manager (Run keys & Startup folders)
-│   ├── privacy/                # Privacy & Telemetry policies
-│   ├── cleaner/                # Safe disk space cleaner with age heuristics
-│   ├── gaming/                 # Gaming profile (Power plan, Nagle algorithm, GPU priority)
-│   ├── health/                 # SFC, DISM, Defender, and Windows Update diagnostics
-│   ├── restore/                # JSON configuration snapshots & System Restore integration
-│   ├── security/               # Authenticode signature verification & validation
-│   └── cli/                    # Headless CLI argument parser and commands
+│   ├── main.rs                 # Entry point, console attach, GUI bootstrap
+│   ├── lib.rs                  # Library root for all modules
+│   ├── app/                    # GUI layer (eframe/egui)
+│   │   ├── mod.rs              # App struct, status footer, nav layout
+│   │   ├── state.rs            # AppState, poller, event recorder
+│   │   ├── theme.rs            # Theme palette and Segoe fonts
+│   │   ├── navigation.rs       # Sidebar tabs with 22px icon slots
+│   │   ├── components.rs       # Metric cards, badges, headers
+│   │   └── views/              # 13 view modules (Dashboard, Memory, etc.)
+│   ├── core/                   # Foundation
+│   │   ├── config.rs           # TOML config
+│   │   ├── executor.rs         # Win32 executor, dry-run, Registry
+│   │   ├── logger.rs           # Circular audit buffer
+│   │   ├── safety.rs           # Risk gate (Safe, Low, Medium, High, Critical)
+│   │   └── system.rs           # OS version, build, arch, admin check
+│   ├── memory/                 # Memory monitor and trim
+│   │   ├── pressure.rs         # RAM pressure score
+│   │   ├── optimizer.rs        # Working set trim with guard
+│   │   ├── monitor.rs          # Kernel pools, standby, commit charge
+│   │   └── compression.rs      # Memory Compression query
+│   ├── debloat/                # Debloat engine
+│   │   ├── rules.rs            # Rule load and preset hierarchy
+│   │   ├── scanner.rs          # State scan (Applied vs Pending)
+│   │   ├── executor.rs         # Preset run with confirm gate
+│   │   └── packages.rs         # Win32 AppX Registry scan
+│   ├── services/               # Service Control Manager
+│   │   ├── manager.rs          # Startup type and state control
+│   │   └── scanner.rs          # Enum with dependency map
+│   ├── startup/                # Run keys and Startup folders
+│   ├── privacy/                # Privacy and telemetry
+│   ├── cleaner/                # Disk cleaner with age check
+│   ├── gaming/                 # Power plan, Nagle, GPU priority
+│   ├── health/                 # SFC, DISM, Defender, Update
+│   ├── restore/                # JSON snapshots and Restore Point
+│   ├── security/               # Authenticode verification
+│   └── cli/                    # CLI parser and commands
 └── tests/
-    └── core_tests.rs           # Automated unit and integration test suite
+    └── core_tests.rs           # Unit and integration tests
 ```
 
 ---
 
-## 4. Safety & Risk Gating Engine
+## 4. Safety and Risk Gating Engine
 
-Every action in Wino is classified according to the following strict safety matrix:
+You run each action through a risk gate before Wino touches the system.
 
 ```mermaid
 stateDiagram-v2
@@ -135,39 +138,47 @@ stateDiagram-v2
     RecordAuditLog --> [*]: Success
 ```
 
-### Risk Level Definitions
-1. **`Safe`**: Non-destructive, zero risk of breakage. Fully reversible without system restart (e.g. Disabling Advertising ID, disabling Bing search in Start Menu).
-2. **`Low`**: Modifies optional background features (e.g. Windows 11 Widgets news feed, Copilot side panel, Xbox background services for non-gamers).
-3. **`Medium`**: Modifies system-wide diagnostic collectors, location sensors, or removes vendor promotional stubs. Requires user attention and confirmation dialog.
-4. **`High`**: Modifies advanced network or scheduled task configurations. Restricted to manual per-item execution.
-5. **`Critical`**: Core kernel components (`RpcSs`, `WinDefend`, `wuauserv`, `DcomLaunch`). **Hard-blocked from automated modification.**
+### Risk Levels
+
+1. **`Safe`**: You change a reversible toggle. You risk no breakage. You need no restart. Example: you turn off Advertising ID or Bing in Start.
+
+2. **`Low`**: You turn off an optional background feature. Example: you turn off Widgets feed, Copilot panel, or Xbox background tasks.
+
+3. **`Medium`**: You change a diagnostic collector, sensor, or promo stub. You see a confirm dialog before Wino applies it.
+
+4. **`High`**: You change a network or scheduled task. You apply it per item, by hand.
+
+5. **`Critical`**: You touch a kernel component like `RpcSs`, `WinDefend`, `wuauserv`, or `DcomLaunch`. Wino blocks you. You cannot automate this.
 
 ---
 
-## 5. Snapshot & Rollback State Machine
+## 5. Snapshot and Rollback
 
-Before any batch operation or preset optimization is applied, Wino automatically serializes a point-in-time configuration snapshot to disk:
+You change a batch. Wino saves state first so you can undo.
 
-1. **Pre-Flight Snapshot**:
-   - Records current registry DWORD/String values.
-   - Records current service startup states (`Automatic`, `Manual`, `Disabled`).
-   - Saves formatted timestamped JSON to `%APPDATA%\Wino\snapshots\<id>.json`.
-2. **Execution**:
-   - Applies target configuration via native Win32 APIs.
-   - Logs execution results to in-memory circular buffer and UI event ticker.
-3. **Rollback**:
-   - User can inspect past snapshots at any time in the **Restore Points** tab (`NavTab::Restore`).
-   - One-click rollback restores all saved registry entries and service startup types to their exact prior state.
+1. **Pre-Flight Snapshot**
+   - You capture registry DWORD and string values.
+   - You capture service startup types (`Automatic`, `Manual`, `Disabled`).
+   - You write timestamped JSON to `%APPDATA%\Wino\snapshots\<id>.json`.
+
+2. **Run**
+   - You apply the target values through Win32.
+   - You log results to the circular buffer and the event ticker.
+
+3. **Rollback**
+   - You open Restore Points (`NavTab::Restore`) and you pick a snapshot.
+   - You click restore. Wino writes the old registry and service values back.
 
 ---
 
-## 6. UI Rendering & Font Pipeline
+## 6. UI Rendering and Font Pipeline
 
-Wino utilizes `eframe` / `egui` for GPU-accelerated immediate-mode GUI rendering.
+You render the GUI with `eframe` and `egui`. You get GPU acceleration and immediate-mode updates.
 
-To guarantee crisp, native Fluent iconography without missing glyph tofu (`□`):
-1. On application startup, `theme::configure_fonts` reads native Windows TrueType font files from `C:\Windows\Fonts\`:
-   - `segoeui.ttf` (Primary UI text)
-   - `seguisym.ttf` (Segoe UI Symbol for Fluent glyphs)
-   - `segmdl2.ttf` (Segoe MDL2 Assets)
-2. All navigation items allocate a dedicated `22px` icon container with responsive item wrapping, ensuring zero text collisions or overlapping (`timpa`) across window resizing.
+For crisp Fluent icons you avoid tofu boxes. At startup Wino loads native Windows fonts from `C:\Windows\Fonts\`:
+
+- `segoeui.ttf` (UI text)
+- `seguisym.ttf` (Segoe UI Symbol)
+- `segmdl2.ttf` (MDL2 Assets)
+
+You allocate a 22px icon slot for each nav item. You wrap text on resize so you never overlap items.
