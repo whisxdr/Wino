@@ -7,7 +7,7 @@
 #>
 
 param(
-    [string]$Version = "0.1.0"
+    [string]$Version = "2.5.0"
 )
 
 $ErrorActionPreference = "Stop"

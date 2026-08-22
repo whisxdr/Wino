@@ -31,12 +31,14 @@ jobs:
       - name: Prepare Portable ZIP Archive
         shell: pwsh
         run: |
-          $tag = if ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } else { "v0.1.0" }
+          $tag = if ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } else { "v2.5.0" }
           New-Item -ItemType Directory -Force -Path "dist/Wino" | Out-Null
           Copy-Item "target/release/wino.exe" -Destination "dist/Wino/"
           Copy-Item "README.md" -Destination "dist/Wino/"
           Copy-Item "LICENSE" -Destination "dist/Wino/"
           Copy-Item "ARCHITECTURE.md" -Destination "dist/Wino/"
+          Copy-Item "installer/install.ps1" -Destination "dist/Wino/" -ErrorAction SilentlyContinue
+          Copy-Item "installer/uninstall.ps1" -Destination "dist/Wino/" -ErrorAction SilentlyContinue
           Compress-Archive -Path "dist/Wino/*" -DestinationPath "dist/Wino-$tag-windows-x64-portable.zip" -Force
 
       - name: Build Inno Setup Installer
@@ -48,7 +50,8 @@ jobs:
         shell: pwsh
         run: |
           Set-Location dist
-          $files = Get-ChildItem -File -Filter "*.zip", "*.exe"
+          if (Test-Path checksums.sha256) { Remove-Item checksums.sha256 -Force }
+          $files = Get-ChildItem -File | Where-Object { $_.Extension -in ".zip",".exe" }
           foreach ($f in $files) {
               $hash = (Get-FileHash -Path $f.FullName -Algorithm SHA256).Hash
               "$hash  $($f.Name)" | Out-File -Append -Encoding utf8 checksums.sha256
