@@ -69,7 +69,7 @@ Wino eliminates intermediate shells entirely by binding directly to the Windows 
 ## 3. Codebase Directory & Module Layout
 
 ```
-d:/Kuliah/Coding/WinOptim/
+wino/
 ├── data/                       # Declarative Rule Databases (JSON)
 │   ├── debloat_rules.json      # Categorized debloat targets & registry keys
 │   ├── service_rules.json      # Windows service descriptions & safety classifications
