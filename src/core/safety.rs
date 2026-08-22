@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+﻿use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum RiskLevel {
@@ -53,7 +53,7 @@ impl SafetyEngine {
             return SafetyCheckResult {
                 is_allowed: false,
                 risk,
-                reason: format!("Operation '{}' is marked as CRITICAL to Windows core stability and cannot be modified automatically.", name),
+                reason: format!("Operation '{}' touches Windows core stability. Wino blocks it.", name),
             };
         }
 
@@ -83,3 +83,4 @@ impl SafetyEngine {
         }
     }
 }
+

@@ -61,10 +61,18 @@ pub fn get_installed_appx_packages() -> Vec<String> {
     packages
 }
 
-pub fn is_package_installed(package_name_pattern: &str) -> bool {
+/// Resolve the full provisioned package names matching a user-facing pattern
+/// (e.g. "Microsoft.ZuneMusic") from the AppxAllUserStore registry enumeration.
+pub fn resolve_full_package_names(package_name_pattern: &str) -> Vec<String> {
     let pattern_lower = package_name_pattern.to_lowercase();
-    let installed = get_installed_appx_packages();
-    installed.iter().any(|p| p.to_lowercase().contains(&pattern_lower))
+    get_installed_appx_packages()
+        .into_iter()
+        .filter(|p| p.to_lowercase().contains(&pattern_lower))
+        .collect()
+}
+
+pub fn is_package_installed(package_name_pattern: &str) -> bool {
+    !resolve_full_package_names(package_name_pattern).is_empty()
 }
 
 pub fn remove_appx_package(package_name_pattern: &str, dry_run: bool) -> Result<(), String> {
@@ -73,36 +81,54 @@ pub fn remove_appx_package(package_name_pattern: &str, dry_run: bool) -> Result<
         return Ok(());
     }
 
-    log_info("debloat", &format!("Removing AppX package: {}", package_name_pattern));
+    // 1. Resolve pattern -> exact full provisioned package name(s) natively via registry.
+    let full_names = resolve_full_package_names(package_name_pattern);
+    if full_names.is_empty() {
+        log_info("debloat", &format!("No installed provisioned package matches '{}'. Treating as already removed.", package_name_pattern));
+        return Ok(());
+    }
 
-    // Controlled, headless package removal with CREATE_NO_WINDOW
-    let status = Command::new("powershell.exe")
-        .creation_flags(CREATE_NO_WINDOW)
-        .args([
-            "-NoProfile",
-            "-NonInteractive",
-            "-WindowStyle",
-            "Hidden",
-            "-Command",
-            &format!(
-                "Get-AppxPackage -AllUsers -Name *{}* | Remove-AppxPackage -ErrorAction SilentlyContinue",
-                package_name_pattern
-            ),
-        ])
-        .status();
+    log_info("debloat", &format!("Removing {} provisioned AppX package(s) via native DISM engine for pattern '{}'", full_names.len(), package_name_pattern));
 
-    match status {
-        Ok(s) if s.success() => {
-            log_info("debloat", &format!("Successfully removed package: {}", package_name_pattern));
-            Ok(())
+    let mut any_success = false;
+    let mut last_error = String::new();
+
+    for full_name in &full_names {
+        // 2. Headless native DISM removal (C++ binary, <10ms spawn, zero PowerShell/.NET overhead).
+        let output = Command::new("dism.exe")
+            .creation_flags(CREATE_NO_WINDOW)
+            .args([
+                "/Online",
+                "/Remove-ProvisionedAppxPackage",
+                &format!("/PackageName:{}", full_name),
+                "/NoRestart",
+            ])
+            .output();
+
+        match output {
+            Ok(out) if out.status.success() => {
+                log_info("debloat", &format!("DISM removed provisioned package: {}", full_name));
+                any_success = true;
+            }
+            Ok(out) => {
+                // DISM exits with 0x800f0043-style codes when the package is not
+                // actually provisioned for removal; treat as non-fatal.
+                let stderr = String::from_utf8_lossy(&out.stderr).trim().to_string();
+                let stdout = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                last_error = if !stderr.is_empty() { stderr } else { stdout };
+                log_error("debloat", &format!("DISM failed for {}: {}", full_name, last_error));
+            }
+            Err(e) => {
+                last_error = e.to_string();
+                log_error("debloat", &format!("Failed to spawn dism.exe: {}", e));
+            }
         }
-        Ok(s) => {
-            log_error("debloat", &format!("Failed to remove package {} (Exit code: {:?})", package_name_pattern, s.code()));
-            Err(format!("Removal exited with code {:?}", s.code()))
-        }
-        Err(e) => {
-            log_error("debloat", &format!("Failed to spawn process: {}", e));
-            Err(e.to_string())
-        }
+    }
+
+    if any_success {
+        log_info("debloat", &format!("Successfully removed package(s): {}", package_name_pattern));
+        Ok(())
+    } else {
+        Err(format!("DISM removal failed: {}", last_error))
     }
 }

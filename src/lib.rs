@@ -1,14 +1,17 @@
 pub mod app;
 pub mod cleaner;
 pub mod cli;
+pub mod context_menu;
 pub mod core;
 pub mod debloat;
 pub mod gaming;
 pub mod health;
 pub mod memory;
 pub mod monitoring;
+pub mod network;
 pub mod privacy;
 pub mod restore;
 pub mod security;
 pub mod services;
 pub mod startup;
+pub mod tasks;

@@ -1,16 +1,19 @@
 pub mod cleaner;
+pub mod context_menu;
 pub mod dashboard;
 pub mod debloat;
 pub mod gaming;
 pub mod health;
 pub mod logs;
 pub mod memory;
+pub mod network;
 pub mod privacy;
 pub mod processes;
 pub mod restore;
 pub mod services;
 pub mod settings;
 pub mod startup;
+pub mod tasks;
 
 use crate::app::navigation::NavTab;
 use crate::app::state::AppState;
@@ -34,6 +37,19 @@ pub fn render_active_view(ui: &mut Ui, state: &mut AppState) {
         ui.add_space(8.0);
     }
 
+    // Global busy indicator while background jobs are running
+    if state.is_busy() {
+        ui.label(
+            RichText::new(format!(
+                "⏳ {}...",
+                if state.action_busy { "Applying" } else { "Scanning" }
+            ))
+            .size(11.5)
+            .color(colors.secondary),
+        );
+        ui.add_space(6.0);
+    }
+
     egui::ScrollArea::vertical()
         .auto_shrink([false, false])
         .show(ui, |ui| {
@@ -46,6 +62,9 @@ pub fn render_active_view(ui: &mut Ui, state: &mut AppState) {
                 NavTab::Services => services::render(ui, state),
                 NavTab::Privacy => privacy::render(ui, state),
                 NavTab::Cleaner => cleaner::render(ui, state),
+                NavTab::ContextMenu => context_menu::render(ui, state),
+                NavTab::Network => network::render(ui, state),
+                NavTab::Tasks => tasks::render(ui, state),
                 NavTab::Gaming => gaming::render(ui, state),
                 NavTab::Health => health::render(ui, state),
                 NavTab::Restore => restore::render(ui, state),

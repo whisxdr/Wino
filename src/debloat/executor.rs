@@ -1,5 +1,5 @@
 use crate::core::executor::{ExecutionResult, SystemExecutor};
-use crate::core::logger::log_info;
+use crate::core::logger::{log_info, log_warn};
 use crate::debloat::rules::DebloatRule;
 use crate::debloat::scanner::scan_debloat_items;
 use crate::restore::snapshots::create_snapshot;
@@ -81,6 +81,18 @@ pub fn apply_debloat_preset(preset: &str, dry_run: bool) -> Vec<ExecutionResult>
     let mut all_results = Vec::new();
 
     log_info("debloat", &format!("Applying debloat preset: '{}' (dry_run: {})", preset, dry_run));
+
+    // Pre-flight safety: create a native VSS System Restore Point before any
+    // high-risk (Balanced/Aggressive) preset mutates the system.
+    if !dry_run && matches!(preset, "Balanced" | "Aggressive") {
+        let config = crate::core::config::AppConfig::load();
+        if config.general.auto_create_restore_point {
+            match crate::restore::vss_point::create_windows_restore_point(&format!("Wino {} preset", preset)) {
+                Ok(msg) => log_info("debloat", &msg),
+                Err(err) => log_warn("debloat", &format!("VSS restore point unavailable: {}", err)),
+            }
+        }
+    }
 
     for item in scanned {
         if item.is_applied {

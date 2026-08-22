@@ -92,7 +92,7 @@ pub fn list_running_processes() -> Vec<ProcessItem> {
     }
 
     // Sort by memory working set descending
-    results.sort_by(|a, b| b.memory_working_set_bytes.cmp(&a.memory_working_set_bytes));
+    results.sort_by_key(|a| std::cmp::Reverse(a.memory_working_set_bytes));
     results
 }
 

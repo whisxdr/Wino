@@ -155,9 +155,9 @@ fn scan_folder(folder: &Path, source_name: &str, items: &mut Vec<StartupItem>) {
 
 fn extract_exe_path(command: &str) -> String {
     let trimmed = command.trim();
-    if trimmed.starts_with('"') {
-        if let Some(end_quote) = trimmed[1..].find('"') {
-            return trimmed[1..1 + end_quote].to_string();
+    if let Some(stripped) = trimmed.strip_prefix('"') {
+        if let Some(end_quote) = stripped.find('"') {
+            return stripped[..end_quote].to_string();
         }
     }
     trimmed.split_whitespace().next().unwrap_or("").to_string()

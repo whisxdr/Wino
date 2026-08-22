@@ -100,8 +100,8 @@ fn read_windows_version_registry() -> (String, String, String) {
         }
 
         let product_name = read_reg_string(hkey, "ProductName").unwrap_or_else(|| "Windows".to_string());
-        let display_version = read_reg_string(hkey, "DisplayVersion").unwrap_or_else(|| "".to_string());
-        let current_build = read_reg_string(hkey, "CurrentBuildNumber").unwrap_or_else(|| "".to_string());
+        let display_version = read_reg_string(hkey, "DisplayVersion").unwrap_or_default();
+        let current_build = read_reg_string(hkey, "CurrentBuildNumber").unwrap_or_default();
 
         let _ = RegCloseKey(hkey);
 

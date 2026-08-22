@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use crate::cleaner::cleaner::execute_cleanup;
 use crate::cleaner::scanner::scan_cleaner_targets;
+use crate::context_menu::scanner::scan_context_menu_handlers;
 use crate::core::system::SystemInfo;
 use crate::debloat::executor::apply_debloat_preset;
 use crate::debloat::scanner::scan_debloat_items;
@@ -8,16 +9,20 @@ use crate::gaming::optimizer::enable_gaming_profile;
 use crate::health::diagnostics::evaluate_system_health;
 use crate::memory::monitor::capture_memory_snapshot;
 use crate::memory::optimizer::optimize_memory;
+use crate::network::dns::{find_preset, list_adapters, set_adapter_dns, ALL_PRESETS};
+use crate::network::flush::flush_dns_cache;
 use crate::privacy::scanner::scan_privacy_items;
 use crate::restore::rollback::rollback_snapshot;
 use crate::restore::snapshots::list_snapshots;
 use crate::services::scanner::scan_services;
 use crate::startup::scanner::scan_startup_items;
+use crate::tasks::manager::set_task_enabled;
+use crate::tasks::scanner::scan_scheduled_tasks;
 
 #[derive(Parser, Debug)]
 #[command(name = "wino")]
 #[command(author = "Wino Development Team")]
-#[command(version = "0.1.0")]
+#[command(version = "2.5.0")]
 #[command(about = "Rust-Native Windows Debloater, Optimizer & Memory Suite", long_about = None)]
 pub struct CliArgs {
     #[command(subcommand)]
@@ -60,6 +65,22 @@ pub enum Commands {
     Restore {
         #[command(subcommand)]
         action: Option<RestoreCommands>,
+    },
+    /// Context menu shell handler management
+    #[command(name = "contextmenu")]
+    ContextMenu {
+        #[command(subcommand)]
+        action: Option<ContextMenuCommands>,
+    },
+    /// DNS flush and preset-based DNS switching (native Win32, zero PowerShell)
+    Dns {
+        #[command(subcommand)]
+        action: Option<DnsCommands>,
+    },
+    /// Inspect and toggle telemetry scheduled tasks (native schtasks)
+    Tasks {
+        #[command(subcommand)]
+        action: Option<TasksCommands>,
     },
 }
 
@@ -105,6 +126,49 @@ pub enum RestoreCommands {
     /// Rollback system configuration to a specific snapshot ID
     Apply {
         snapshot_id: String,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum ContextMenuCommands {
+    /// List all Explorer context menu handlers
+    Scan,
+    /// Toggle a handler (enable or disable by handler key name)
+    Toggle {
+        handler_name: String,
+        #[arg(long)]
+        enable: bool,
+        #[arg(long)]
+        dry_run: bool,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum DnsCommands {
+    /// List available DNS presets and current adapter configuration
+    Scan,
+    /// Flush the resolver cache via native DnsFlushResolverCache
+    Flush,
+    /// Apply a DNS preset to all adapters (auto / cloudflare / google / quad9)
+    Apply {
+        #[arg(short, long)]
+        preset: String,
+        #[arg(long)]
+        dry_run: bool,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum TasksCommands {
+    /// List detected telemetry and updater scheduled tasks
+    Scan,
+    /// Enable or disable a task by full path (see tasks scan output for paths)
+    Toggle {
+        task_path: String,
+        #[arg(long)]
+        enable: bool,
+        #[arg(long)]
+        dry_run: bool,
     },
 }
 
@@ -237,6 +301,106 @@ pub fn run_cli(command: Commands) {
                     match rollback_snapshot(&snapshot_id) {
                         Ok(msg) => println!("[OK] {}", msg),
                         Err(err) => eprintln!("[ERROR] {}", err),
+                    }
+                }
+            }
+        }
+        Commands::ContextMenu { action } => {
+            match action.unwrap_or(ContextMenuCommands::Scan) {
+                ContextMenuCommands::Scan => {
+                    let handlers = scan_context_menu_handlers();
+                    println!("Found {} Explorer context menu handlers:", handlers.len());
+                    for h in &handlers {
+                        println!(
+                            "  - {} [{}] CLSID {} DLL='{}' store={:?} — {}",
+                            h.friendly_name,
+                            h.handler_name,
+                            h.clsid,
+                            h.dll_path,
+                            h.store,
+                            if h.is_enabled { "Active" } else { "Disabled" }
+                        );
+                    }
+                }
+                ContextMenuCommands::Toggle { handler_name, enable, dry_run } => {
+                    let handlers = scan_context_menu_handlers();
+                    if let Some(entry) = handlers.iter().find(|h| h.handler_name.eq_ignore_ascii_case(&handler_name)) {
+                        match crate::context_menu::manager::toggle_handler(entry, enable, dry_run) {
+                            Ok(()) => println!("[OK] Handler '{}' {}.", entry.friendly_name, if enable { "enabled" } else { "disabled" }),
+                            Err(e) => eprintln!("[ERROR] {}", e),
+                        }
+                    } else {
+                        eprintln!("Handler '{}' not found. Run `wino contextmenu scan` to list available handlers.", handler_name);
+                    }
+                }
+            }
+        }
+        Commands::Dns { action } => {
+            match action.unwrap_or(DnsCommands::Scan) {
+                DnsCommands::Scan => {
+                    println!("Available DNS presets:");
+                    for p in ALL_PRESETS {
+                        let s1 = p.primary.unwrap_or("DHCP");
+                        let s2 = p.secondary.unwrap_or("-");
+                        println!("  - {:<12} {} , {}", p.id, s1, s2);
+                    }
+                    let adapters = list_adapters();
+                    println!("\nDetected {} adapter(s):", adapters.len());
+                    for a in &adapters {
+                        println!("  - {} ({}) -> {}", a.friendly_name, a.guid, if a.current_name_server.is_empty() { "Automatic (DHCP)".to_string() } else { a.current_name_server.clone() });
+                    }
+                }
+                DnsCommands::Flush => match flush_dns_cache() {
+                    Ok(msg) => println!("[OK] {}", msg),
+                    Err(e) => eprintln!("[ERROR] {}", e),
+                },
+                DnsCommands::Apply { preset, dry_run } => {
+                    let Some(p) = find_preset(&preset) else {
+                        eprintln!("Unknown preset '{}'. Available: auto, cloudflare, google, quad9", preset);
+                        return;
+                    };
+                    if preset == "auto" {
+                        println!("Switching to Automatic (DHCP) DNS...");
+                    }
+                    let adapters = list_adapters();
+                    if adapters.is_empty() {
+                        eprintln!("No configurable adapters found.");
+                        return;
+                    }
+                    let mut ok = 0usize;
+                    for a in &adapters {
+                        println!("  Applying '{}' to {}... dry_run={}", p.name, a.friendly_name, dry_run);
+                        if set_adapter_dns(a, p, dry_run).is_ok() {
+                            ok += 1;
+                        }
+                    }
+                    if !dry_run && flush_dns_cache().is_ok() {
+                        println!("DNS cache flushed.");
+                    }
+                    println!("[OK] Applied '{}' to {}/{} adapters.", p.name, ok, adapters.len());
+                }
+            }
+        }
+        Commands::Tasks { action } => {
+            match action.unwrap_or(TasksCommands::Scan) {
+                TasksCommands::Scan => {
+                    let items = scan_scheduled_tasks();
+                    println!("Found {} telemetry/updater tasks:", items.len());
+                    for it in &items {
+                        println!(
+                            "  - {} [{}] — {} ({})  task_path='{}'",
+                            it.name,
+                            it.category_label,
+                            it.description,
+                            if it.is_enabled { "Enabled" } else { "Disabled" },
+                            it.task_path
+                        );
+                    }
+                }
+                TasksCommands::Toggle { task_path, enable, dry_run } => {
+                    match set_task_enabled(&task_path, enable, dry_run) {
+                        Ok(()) => println!("[OK] Task '{}' {}.", task_path, if enable { "enabled" } else { "disabled" }),
+                        Err(e) => eprintln!("[ERROR] {}", e),
                     }
                 }
             }

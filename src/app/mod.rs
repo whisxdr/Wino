@@ -3,6 +3,7 @@ pub mod navigation;
 pub mod state;
 pub mod theme;
 pub mod views;
+pub mod worker;
 
 use crate::app::navigation::NavTab;
 use crate::app::state::AppState;

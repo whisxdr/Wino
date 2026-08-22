@@ -17,6 +17,12 @@ pub struct GeneralConfig {
     pub dry_run: bool,
     pub minimize_to_tray: bool,
     pub auto_create_restore_point: bool,
+    #[serde(default = "default_language")]
+    pub language: String, // "en", "id"
+}
+
+fn default_language() -> String {
+    "en".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -25,6 +31,23 @@ pub struct MemoryConfig {
     pub refresh_interval_ms: u64,
     pub auto_trim_threshold_pct: f32,
     pub smart_optimize_enabled: bool,
+    /// Background auto-trim toggle (tray-less power saver mode).
+    #[serde(default)]
+    pub auto_trim_enabled: bool,
+    /// How often the background monitor samples RAM usage.
+    #[serde(default = "default_trim_interval")]
+    pub auto_trim_interval_secs: u64,
+    /// Minimum spacing between two automatic trims (anti-thrash cooldown).
+    #[serde(default = "default_trim_cooldown")]
+    pub auto_trim_cooldown_secs: u64,
+}
+
+fn default_trim_interval() -> u64 {
+    30
+}
+
+fn default_trim_cooldown() -> u64 {
+    300
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,12 +77,16 @@ impl Default for AppConfig {
                 dry_run: false,
                 minimize_to_tray: false,
                 auto_create_restore_point: true,
+                language: default_language(),
             },
             memory: MemoryConfig {
                 mode: "smart".to_string(),
                 refresh_interval_ms: 1000,
                 auto_trim_threshold_pct: 85.0,
                 smart_optimize_enabled: true,
+                auto_trim_enabled: false,
+                auto_trim_interval_secs: default_trim_interval(),
+                auto_trim_cooldown_secs: default_trim_cooldown(),
             },
             monitoring: MonitoringConfig {
                 active_poll_ms: 500,
@@ -110,7 +137,7 @@ impl AppConfig {
         if let Some(parent) = path.parent() {
             let _ = fs::create_dir_all(parent);
         }
-        let content = toml::to_string_pretty(self).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        let content = toml::to_string_pretty(self).map_err(std::io::Error::other)?;
         fs::write(path, content)
     }
 }

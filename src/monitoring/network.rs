@@ -18,6 +18,12 @@ pub struct NetworkMonitor {
 
 static NET_MONITOR: Mutex<Option<NetworkMonitor>> = Mutex::new(None);
 
+impl Default for NetworkMonitor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl NetworkMonitor {
     pub fn new() -> Self {
         let (in_octets, out_octets) = Self::read_total_octets();

@@ -21,6 +21,9 @@ Semua aset gambar tangkapan layar (**screenshots**) pada dokumen ini tersimpan s
 11. [↺ Restore & Safety Snapshots (Titik Pemulihan & Rollback)](#11--restore--safety-snapshots)
 12. [📋 Audit & Event Logs (Catatan Riwayat Eksekusi)](#12--audit--event-logs)
 13. [🔧 Settings & Preferences (Pengaturan Tema & Hak Akses)](#13--settings--preferences)
+14. [🖱 Context Menu Cleaner (Pembersih Klik Kanan Windows Explorer)](#14--context-menu-cleaner)
+15. [🌐 DNS & Network Optimizer (Optimasi Jaringan & Flush DNS)](#15--dns--network-optimizer)
+16. [⏱ Scheduled Tasks (Manajemen Tugas Terjadwal Windows)](#16--scheduled-tasks)
 
 ---
 
@@ -221,6 +224,49 @@ Pengaturan tema antarmuka pengguna, preferensi aplikasi, dan pengelolaan hak aks
 - **Execution Privileges**: Menampilkan status elevasi hak akses (`Standard User` atau `Administrator`).
 - **Restart as Administrator**: Opsi 1-klik untuk memulai ulang Wino dengan hak akses Administrator ketika dibutuhkan untuk modifikasi registri tingkat dalam.
 - **About Wino**: Informasi versi rilis, arsitektur native Rust, dan lisensi open source.
+- **Memory Auto-Trim**: Konfigurasi ambang batas otomatisasi pembersihan RAM saat sistem berada di bawah tekanan.
+
+---
+
+## 14. 🖱 Context Menu Cleaner
+
+![Context Menu Cleaner](./screenshots/14_context_menu.png)
+
+### 📌 Fungsi Utama
+Memindai, menginspeksi, dan menonaktifkan item menu klik kanan Windows Explorer yang lambat atau tidak diinginkan (*Shell Extensions* dan *Context Menu Handlers*).
+
+### 🔍 Fitur & Komponen UI
+- **Pencarian Top-Anchored**: Kotak pencarian di bagian atas dengan counter jumlah handler yang terdaftar.
+- **Deteksi CLSID & DLL**: Mengidentifikasi DLL target penerbit dan lokasi modul pada registry.
+- **Disable / Enable Non-Destructive**: Menonaktifkan ekstensi menu tanpa merusak registry asli, dengan opsi pengembalian 1-klik.
+
+---
+
+## 15. 🌐 DNS & Network Optimizer
+
+![DNS & Network Optimizer](./screenshots/15_network_dns.png)
+
+### 📌 Fungsi Utama
+Optimasi konektivitas jaringan Windows, manajemen preset DNS privat/cepat, dan pembersihan cache DNS resolver native.
+
+### 🔍 Fitur & Komponen UI
+- **Native Flush DNS Cache**: Pembersihan cache resolver instan via Win32 `DnsFlushResolverCache` tanpa membuka subprocess CMD / PowerShell.
+- **DNS Presets 1-Click**: Pilihan preset teruji (*Cloudflare 1.1.1.1*, *Google DNS 8.8.8.8*, *Quad9 Security*, *AdGuard DNS*, *DHCP Automatic*).
+- **Network Adapter Inspector**: Menampilkan adapter jaringan aktif, status koneksi, dan alamat IP / DNS yang sedang digunakan.
+
+---
+
+## 16. ⏱ Scheduled Tasks
+
+![Scheduled Tasks](./screenshots/16_scheduled_tasks.png)
+
+### 📌 Fungsi Utama
+Mengelola tugas terjadwal Windows (*Windows Task Scheduler*) yang sering kali dibuat oleh aplikasi pihak ketiga untuk telemetri atau autoupdate yang memboroskan resource latar belakang.
+
+### 🔍 Fitur & Komponen UI
+- **Pencarian Tugas**: Menyaring tugas berdasarkan nama, path, atau deskripsi.
+- **Rekomendasi Keamanan**: Tag badge indikator (*Safe to disable*, *Optional*, *System essential*).
+- **Toggle Status**: Mengaktifkan atau menonaktifkan trigger tugas terjadwal secara instan.
 
 ---
 

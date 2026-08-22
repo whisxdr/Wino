@@ -1,24 +1,42 @@
 use crate::app::navigation::NavTab;
-use crate::cleaner::scanner::{scan_cleaner_targets, ScannedCleanItem};
+use crate::app::worker::{Action, EngineHandles, Job, JobResult, ScanKind};
+use crate::cleaner::scanner::ScannedCleanItem;
+use crate::context_menu::scanner::ContextMenuEntry;
 use crate::core::config::AppConfig;
+use crate::core::i18n::{Lang};
 use crate::core::system::SystemInfo;
-use crate::debloat::scanner::{scan_debloat_items, ScannedDebloatItem};
+use crate::debloat::scanner::ScannedDebloatItem;
 use crate::health::diagnostics::{evaluate_system_health, SystemHealthReport};
+use crate::memory::auto_trim::AutoTrimHandle;
 use crate::memory::monitor::{capture_memory_snapshot, DetailedMemorySnapshot};
 use crate::monitoring::cpu::get_cpu_usage;
 use crate::monitoring::disk::get_primary_disk_stats;
 use crate::monitoring::gpu::get_gpu_stats;
 use crate::monitoring::network::get_network_stats;
-use crate::monitoring::process::{list_running_processes, ProcessItem};
+use crate::monitoring::process::ProcessItem;
 use crate::monitoring::ram::get_ram_stats;
 use crate::monitoring::SystemMetricsSnapshot;
-use crate::privacy::scanner::{scan_privacy_items, ScannedPrivacyItem};
-use crate::restore::snapshots::{list_snapshots, Snapshot};
-use crate::services::scanner::{scan_services, ServiceItem};
-use crate::startup::scanner::{scan_startup_items, StartupItem};
+use crate::privacy::scanner::ScannedPrivacyItem;
+use crate::restore::snapshots::Snapshot;
+use crate::services::scanner::ServiceItem;
+use crate::startup::scanner::StartupItem;
+use crate::tasks::scanner::ScheduledTaskItem;
 use chrono::Local;
 use eframe::egui;
+use std::collections::{HashSet, VecDeque};
+use std::sync::mpsc::{Receiver, Sender};
 use std::time::Instant;
+
+/// Maximum number of samples retained in the sliding telemetry history.
+pub const HISTORY_CAPACITY: usize = 24;
+
+/// O(1) sliding-window insertion used by the live telemetry charts.
+pub fn push_history_sample(buffer: &mut VecDeque<f32>, value: f32) {
+    buffer.push_back(value);
+    if buffer.len() > HISTORY_CAPACITY {
+        buffer.pop_front();
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct RecentEvent {
@@ -33,6 +51,7 @@ pub struct AppState {
     pub config: AppConfig,
     pub sys_info: SystemInfo,
     pub current_tab: NavTab,
+    pub lang: Lang,
     pub metrics: SystemMetricsSnapshot,
     pub memory_details: DetailedMemorySnapshot,
     pub health_report: SystemHealthReport,
@@ -43,6 +62,10 @@ pub struct AppState {
     pub privacy_items: Vec<ScannedPrivacyItem>,
     pub cleaner_items: Vec<ScannedCleanItem>,
     pub snapshots: Vec<Snapshot>,
+    pub context_menu_items: Vec<ContextMenuEntry>,
+    pub task_items: Vec<ScheduledTaskItem>,
+    /// Selected DNS preset id for the Network view ("auto"/"cloudflare"/"google"/"quad9").
+    pub dns_preset_id: String,
     pub search_query: String,
     pub debloat_preset: String,
     pub debloat_show_confirm: bool,
@@ -50,10 +73,23 @@ pub struct AppState {
     pub debloat_filter_preset: String,
     pub toast_message: Option<(String, Instant)>,
     pub last_event: Option<RecentEvent>,
-    pub cpu_history: Vec<f32>,
-    pub ram_history: Vec<f32>,
+    pub cpu_history: VecDeque<f32>,
+    pub ram_history: VecDeque<f32>,
     pub last_fast_poll: Instant,
     pub last_slow_poll: Instant,
+
+    // ---- Background engine ----
+    job_tx: Sender<Job>,
+    job_rx: Receiver<JobResult>,
+    pub pending_scans: HashSet<ScanKind>,
+    pub action_busy: bool,
+    pub auto_trim: Option<AutoTrimHandle>,
+}
+
+impl Default for AppState {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AppState {
@@ -62,6 +98,7 @@ impl AppState {
         let sys_info = SystemInfo::detect();
         let memory_details = capture_memory_snapshot();
         let health_report = evaluate_system_health();
+        let lang = Lang::from_code(&config.general.language);
 
         let initial_event = RecentEvent {
             timestamp: Local::now().format("%H:%M:%S").to_string(),
@@ -71,14 +108,22 @@ impl AppState {
             created_at: Instant::now(),
         };
 
+        let EngineHandles { job_tx, job_rx, auto_trim } =
+            crate::app::worker::start_engine(config.memory.auto_trim_enabled);
+
+        if let Some(handle) = &auto_trim {
+            handle.threshold_pct.store(config.memory.auto_trim_threshold_pct.round() as u32, std::sync::atomic::Ordering::Release);
+        }
+
         // Initialize with default history samples
-        let initial_cpu = vec![10.0, 15.0, 12.0, 25.0, 40.0, 35.0, 50.0, 20.0, 30.0, 15.0, 10.0, 12.0, 18.0, 25.0, 20.0, 14.0];
-        let initial_ram = vec![45.0; 16];
+        let initial_cpu: VecDeque<f32> = vec![10.0, 15.0, 12.0, 25.0, 40.0, 35.0, 50.0, 20.0, 30.0, 15.0, 10.0, 12.0, 18.0, 25.0, 20.0, 14.0].into();
+        let initial_ram: VecDeque<f32> = vec![45.0; HISTORY_CAPACITY].into();
 
         Self {
             config,
             sys_info,
             current_tab: NavTab::Dashboard,
+            lang,
             metrics: SystemMetricsSnapshot::default(),
             memory_details,
             health_report,
@@ -89,6 +134,9 @@ impl AppState {
             privacy_items: Vec::new(),
             cleaner_items: Vec::new(),
             snapshots: Vec::new(),
+            context_menu_items: Vec::new(),
+            task_items: Vec::new(),
+            dns_preset_id: "cloudflare".to_string(),
             search_query: String::new(),
             debloat_preset: "Safe".to_string(),
             debloat_show_confirm: false,
@@ -100,8 +148,107 @@ impl AppState {
             ram_history: initial_ram,
             last_fast_poll: Instant::now(),
             last_slow_poll: Instant::now(),
+
+            job_tx,
+            job_rx,
+            pending_scans: HashSet::new(),
+            action_busy: false,
+            auto_trim,
         }
     }
+
+    // ================= Background engine plumbing =================
+
+    /// Queue a scan on a worker thread (no-op while that scan is in flight).
+    pub fn request_scan(&mut self, kind: ScanKind) {
+        if self.pending_scans.contains(&kind) {
+            return;
+        }
+        self.pending_scans.insert(kind);
+        let _ = self.job_tx.send(Job::Scan(kind));
+        self.record_event("Scan", &format!("{} {}...", crate::core::i18n::tr(self.lang, "common.scanning"), kind.label()), true);
+    }
+
+    /// Queue a mutating action (one at a time).
+    pub fn request_action(&mut self, action: Action) {
+        if self.action_busy {
+            self.set_toast("Another operation is still running — please wait.");
+            return;
+        }
+        self.action_busy = true;
+        let _ = self.job_tx.send(Job::Run(action));
+    }
+
+    /// Drain finished results from the worker pool (called every frame).
+    fn poll_results(&mut self) {
+        while let Ok(result) = self.job_rx.try_recv() {
+            match result {
+                JobResult::ScannedProcesses(items) => {
+                    self.processes = items.clone();
+                    self.finish_scan(ScanKind::Processes, format!("Refreshed {} active processes", items.len()));
+                }
+                JobResult::ScannedDebloat(items) => {
+                    self.debloat_items = items.clone();
+                    self.finish_scan(ScanKind::Debloat, format!("Scanned {} debloat targets", items.len()));
+                }
+                JobResult::ScannedStartup(items) => {
+                    self.startup_items = items.clone();
+                    self.finish_scan(ScanKind::Startup, format!("Scanned {} startup entries", items.len()));
+                }
+                JobResult::ScannedServices(items) => {
+                    self.services = items.clone();
+                    self.finish_scan(ScanKind::Services, format!("Loaded {} service configurations", items.len()));
+                }
+                JobResult::ScannedPrivacy(items) => {
+                    self.privacy_items = items.clone();
+                    self.finish_scan(ScanKind::Privacy, format!("Scanned {} privacy telemetry rules", items.len()));
+                }
+                JobResult::ScannedCleaner(items) => {
+                    let total_mb: u64 = items.iter().map(|i| i.total_bytes).sum::<u64>() / (1024 * 1024);
+                    self.cleaner_items = items.clone();
+                    self.finish_scan(ScanKind::Cleaner, format!("Scanned temporary storage (~{} MB recoverable)", total_mb));
+                }
+                JobResult::ScannedSnapshots(items) => {
+                    self.snapshots = items.clone();
+                    self.finish_scan(ScanKind::Snapshots, format!("Loaded {} system snapshots", items.len()));
+                }
+                JobResult::ScannedContextMenu(items) => {
+                    self.context_menu_items = items.clone();
+                    self.finish_scan(ScanKind::ContextMenu, format!("Found {} shell context-menu handlers", items.len()));
+                }
+                JobResult::ScannedTasks(items) => {
+                    self.task_items = items.clone();
+                    self.finish_scan(ScanKind::Tasks, format!("Found {} telemetry/updater scheduled tasks", items.len()));
+                }
+                JobResult::MemoryReport(report) => {
+                    self.action_busy = false;
+                    self.set_toast(&report.message);
+                }
+                JobResult::ActionDone { message, success, follow_up } => {
+                    self.action_busy = false;
+                    if success {
+                        self.set_toast(&message);
+                    } else {
+                        self.record_event("Action", &message, false);
+                        self.set_toast(&message);
+                    }
+                    if let Some(kind) = follow_up {
+                        self.request_scan(kind);
+                    }
+                }
+                JobResult::Event { category, message, is_success } => {
+                    self.record_event(&category, &message, is_success);
+                }
+            }
+        }
+    }
+
+    fn finish_scan(&mut self, kind: ScanKind, message: String) {
+        self.pending_scans.remove(&kind);
+        self.record_event(kind.label(), &message, true);
+    }
+
+    // ================= Legacy public API (now async-backed) =================
 
     pub fn set_toast(&mut self, msg: &str) {
         self.toast_message = Some((msg.to_string(), Instant::now()));
@@ -121,6 +268,9 @@ impl AppState {
 
     pub fn update_tick(&mut self, ctx: &egui::Context) {
         let now = Instant::now();
+
+        // Drain completed background jobs first so fresh data paints this frame.
+        self.poll_results();
 
         // 1. Fast polling for CPU & RAM (500ms when focused)
         if now.duration_since(self.last_fast_poll).as_millis() >= 500 {
@@ -151,16 +301,9 @@ impl AppState {
                 process_count: ram.process_count,
             };
 
-            // Update sliding history buffers (keep up to 24 samples)
-            self.cpu_history.push(cpu);
-            if self.cpu_history.len() > 24 {
-                self.cpu_history.remove(0);
-            }
-
-            self.ram_history.push(ram.usage_pct);
-            if self.ram_history.len() > 24 {
-                self.ram_history.remove(0);
-            }
+            // O(1) sliding history buffers — no heap-shifting Vec::remove(0).
+            push_history_sample(&mut self.cpu_history, cpu);
+            push_history_sample(&mut self.ram_history, ram.usage_pct);
 
             self.memory_details = capture_memory_snapshot();
             ctx.request_repaint_after(std::time::Duration::from_millis(500));
@@ -178,41 +321,69 @@ impl AppState {
                 self.toast_message = None;
             }
         }
+
+        // Keep repainting while background work is outstanding.
+        if self.is_busy() {
+            ctx.request_repaint_after(std::time::Duration::from_millis(120));
+        }
+    }
+
+    pub fn is_busy(&self) -> bool {
+        self.action_busy || !self.pending_scans.is_empty()
     }
 
     pub fn refresh_processes(&mut self) {
-        self.processes = list_running_processes();
-        self.record_event("Processes", &format!("Refreshed {} active processes", self.processes.len()), true);
+        self.request_scan(ScanKind::Processes);
     }
 
     pub fn refresh_debloat(&mut self) {
-        self.debloat_items = scan_debloat_items();
-        self.record_event("Debloat", &format!("Scanned {} debloat targets", self.debloat_items.len()), true);
+        self.request_scan(ScanKind::Debloat);
     }
 
     pub fn refresh_startup(&mut self) {
-        self.startup_items = scan_startup_items();
-        self.record_event("Startup", &format!("Scanned {} startup entries", self.startup_items.len()), true);
+        self.request_scan(ScanKind::Startup);
     }
 
     pub fn refresh_services(&mut self) {
-        self.services = scan_services();
-        self.record_event("Services", &format!("Loaded {} service configurations", self.services.len()), true);
+        self.request_scan(ScanKind::Services);
     }
 
     pub fn refresh_privacy(&mut self) {
-        self.privacy_items = scan_privacy_items();
-        self.record_event("Privacy", &format!("Scanned {} privacy telemetry rules", self.privacy_items.len()), true);
+        self.request_scan(ScanKind::Privacy);
     }
 
     pub fn refresh_cleaner(&mut self) {
-        self.cleaner_items = scan_cleaner_targets();
-        let total_mb: u64 = self.cleaner_items.iter().map(|i| i.total_bytes).sum::<u64>() / (1024 * 1024);
-        self.record_event("Cleaner", &format!("Scanned temporary storage (~{} MB recoverable)", total_mb), true);
+        self.request_scan(ScanKind::Cleaner);
     }
 
     pub fn refresh_snapshots(&mut self) {
-        self.snapshots = list_snapshots();
-        self.record_event("Restore", &format!("Loaded {} system snapshots", self.snapshots.len()), true);
+        self.request_scan(ScanKind::Snapshots);
+    }
+
+    pub fn refresh_context_menu(&mut self) {
+        self.request_scan(ScanKind::ContextMenu);
+    }
+
+    pub fn refresh_tasks(&mut self) {
+        self.request_scan(ScanKind::Tasks);
+    }
+
+    /// Persist language changes and notify the UI.
+    pub fn set_language(&mut self, lang: Lang) {
+        self.lang = lang;
+        self.config.general.language = lang.code().to_string();
+        let _ = self.config.save();
+    }
+
+    /// Sync auto-trimmer runtime knobs with the config panel.
+    pub fn apply_auto_trim_settings(&mut self) {
+        if let Some(handle) = &self.auto_trim {
+            handle.set_enabled(self.config.memory.auto_trim_enabled);
+            handle.threshold_pct.store(
+                self.config.memory.auto_trim_threshold_pct.round() as u32,
+                std::sync::atomic::Ordering::Release,
+            );
+        }
+        let _ = self.config.save();
     }
 }

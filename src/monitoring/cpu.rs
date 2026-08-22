@@ -13,6 +13,12 @@ pub struct CpuMonitor {
 
 static CPU_MONITOR: Mutex<Option<CpuMonitor>> = Mutex::new(None);
 
+impl Default for CpuMonitor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CpuMonitor {
     pub fn new() -> Self {
         let (idle, kernel, user) = Self::read_raw_times();

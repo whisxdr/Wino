@@ -3160,7 +3160,7 @@ dependencies = [
 
 [[package]]
 name = "wino"
-version = "0.1.0"
+version = "2.5.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -3177,7 +3177,6 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "windows 0.58.0",
- "windows-sys 0.59.0",
 ]
 
 [[package]]

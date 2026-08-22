@@ -29,14 +29,19 @@ impl ScreenshotCapturer {
         let mut app = WinoApp::new(cc);
 
         // Preload all data so all tabs have rich, realistic information
+        // NOTE: refresh_* is now async — for screenshots we fill the state
+        // synchronously so every panel is populated when the shutter clicks.
         println!("[*] Pre-loading system state for rich screenshot capture...");
-        app.state.refresh_processes();
-        app.state.refresh_debloat();
-        app.state.refresh_startup();
-        app.state.refresh_services();
-        app.state.refresh_privacy();
-        app.state.refresh_cleaner();
-        app.state.refresh_snapshots();
+        // Synchronous preload (deterministic, no wait for worker threads)
+        app.state.processes = wino::monitoring::process::list_running_processes();
+        app.state.debloat_items = wino::debloat::scanner::scan_debloat_items();
+        app.state.startup_items = wino::startup::scanner::scan_startup_items();
+        app.state.services = wino::services::scanner::scan_services();
+        app.state.privacy_items = wino::privacy::scanner::scan_privacy_items();
+        app.state.cleaner_items = wino::cleaner::scanner::scan_cleaner_targets();
+        app.state.snapshots = wino::restore::snapshots::list_snapshots();
+        app.state.context_menu_items = wino::context_menu::scanner::scan_context_menu_handlers();
+        app.state.task_items = wino::tasks::scanner::scan_scheduled_tasks();
 
         let tabs = vec![
             (NavTab::Dashboard, "01_dashboard"),
@@ -47,6 +52,9 @@ impl ScreenshotCapturer {
             (NavTab::Services, "06_services"),
             (NavTab::Privacy, "07_privacy_center"),
             (NavTab::Cleaner, "08_storage_cleaner"),
+            (NavTab::ContextMenu, "14_context_menu"),
+            (NavTab::Network, "15_network_dns"),
+            (NavTab::Tasks, "16_scheduled_tasks"),
             (NavTab::Gaming, "09_gaming_profile"),
             (NavTab::Health, "10_windows_health"),
             (NavTab::Restore, "11_restore_points"),
