@@ -1,4 +1,4 @@
-﻿//! Dual-language support: English (EN) & Bahasa Indonesia (ID).
+//! Dual-language support: English (EN) & Bahasa Indonesia (ID).
 //!
 //! UI chrome (labels, titles, buttons, dialogs, toasts) covers both languages.
 //! System identifiers, service names (DiagTrack, SysMain), AppX package
@@ -69,6 +69,12 @@ pub const KEYS: &[&str] = &[
     "mem.hardware_badge", "mem.standby_cached", "mem.cached_ready", "mem.active_ram_load",
     "mem.available", "mem.cached", "mem.paged_pool", "mem.smart_optimization",
     "mem.smart_optimization_desc", "mem.trim_now", "mem.auto_trimmer", "mem.in_use_fmt",
+    // Process manager
+    "proc.title", "proc.subtitle", "proc.refresh", "proc.filter_placeholder",
+    "proc.active_tasks", "proc.col_name", "proc.col_pid", "proc.col_working_set",
+    "proc.col_security", "proc.col_action", "proc.badge_critical", "proc.badge_signed",
+    "proc.badge_user", "proc.protected", "proc.end_task", "proc.no_match",
+    "proc.terminated_toast",
     // Debloat
     "deb.title", "deb.subtitle", "deb.preset_label", "deb.safe_preset", "deb.balanced_preset",
     "deb.aggressive_preset", "deb.rules_suffix", "deb.apply_preset_btn",
@@ -200,6 +206,25 @@ fn tr_en(key: &str) -> &'static str {
         "mem.trim_now" => "⚡ Optimize Memory Now",
         "mem.auto_trimmer" => "Auto Memory Trimmer",
         "mem.in_use_fmt" => "IN USE",
+
+        // ---- Process manager ----
+        "proc.title" => "Process Manager",
+        "proc.subtitle" => "Inspect active processes, memory working sets, CPU usage, and signature trust",
+        "proc.refresh" => "↻ Refresh Processes",
+        "proc.filter_placeholder" => "Filter processes by name or PID...",
+        "proc.active_tasks" => "active tasks",
+        "proc.col_name" => "Process Name",
+        "proc.col_pid" => "PID",
+        "proc.col_working_set" => "Working Set",
+        "proc.col_security" => "Security Status",
+        "proc.col_action" => "Action",
+        "proc.badge_critical" => "Critical System",
+        "proc.badge_signed" => "Signed Trust",
+        "proc.badge_user" => "User App",
+        "proc.protected" => "Protected",
+        "proc.end_task" => "End Task",
+        "proc.no_match" => "No processes match your filter.",
+        "proc.terminated_toast" => "Terminated process PID",
 
         // ---- Debloat ----
         "deb.title" => "Windows Debloater & Optimizer",
@@ -394,6 +419,25 @@ fn tr_id(key: &str) -> Option<&'static str> {
         "mem.trim_now" => "⚡ Optimalkan Memori Sekarang",
         "mem.auto_trimmer" => "Pemangkas Memori Otomatis",
         "mem.in_use_fmt" => "TERPAKAI",
+
+        // ---- Manajer proses ----
+        "proc.title" => "Manajer Proses",
+        "proc.subtitle" => "Pantau proses aktif, working set memori, penggunaan CPU, dan tanda tangan keamanan",
+        "proc.refresh" => "↻ Muat Ulang Proses",
+        "proc.filter_placeholder" => "Filter proses berdasarkan nama atau PID...",
+        "proc.active_tasks" => "tugas aktif",
+        "proc.col_name" => "Nama Proses",
+        "proc.col_pid" => "PID",
+        "proc.col_working_set" => "Working Set",
+        "proc.col_security" => "Status Keamanan",
+        "proc.col_action" => "Aksi",
+        "proc.badge_critical" => "Sistem Kritis",
+        "proc.badge_signed" => "Terverifikasi",
+        "proc.badge_user" => "Aplikasi Pengguna",
+        "proc.protected" => "Dilindungi",
+        "proc.end_task" => "Akhiri Tugas",
+        "proc.no_match" => "Tidak ada proses yang cocok dengan filter.",
+        "proc.terminated_toast" => "Menghentikan proses PID",
 
         // ---- Debloat ----
         "deb.title" => "Windows Debloater & Optimizer",

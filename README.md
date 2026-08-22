@@ -6,7 +6,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows_10_%7C_Windows_11-blue.svg?style=flat&logo=windows)](https://microsoft.com/windows)
 [![Architecture](https://img.shields.io/badge/Architecture-Native_Win32_%7C_Zero--PowerShell-success.svg?style=flat)](ARCHITECTURE.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-8%2F8_Passed-brightgreen.svg?style=flat)]()
+[![Tests](https://img.shields.io/badge/Tests-16%2F16_Passed-brightgreen.svg?style=flat)]()
 
 Wino cleans and tunes Windows. You keep control. The app stays light, stays safe, and shows you each change before you apply it.
 
@@ -99,8 +99,20 @@ Wino calls the Windows Kernel and Win32 Registry. You skip the spawn. You keep m
 - You save JSON snapshots and you restore them with one click.
 - You create a native System Restore Point when you want extra safety.
 
-### 12. Audit Logs
+### 12. Context Menu Cleaner
+- You scan and disable slow or bloated shell extension handlers from Explorer right-click menus with instant rollback snapshots.
+
+### 13. DNS & Network Tools
+- You flush DNS resolver cache instantly via `dnsapi.dll` and switch adapter DNS servers (Cloudflare, Google, Quad9, AdGuard).
+
+### 14. Scheduled Tasks Debloater
+- You detect and disable telemetry, CEIP, and background updater scheduled tasks with automated XML backups.
+
+### 15. Audit Logs
 - You review an in-memory circular buffer. You see each operation, dry-run, and timestamp.
+
+### 16. Dual-Language Support (EN / ID)
+- Complete bilingual support for English and Bahasa Indonesia across all navigation tabs, buttons, dialogs, and toasts.
 
 ---
 
@@ -156,7 +168,7 @@ cd Wino
 # Check build
 cargo check
 
-# Run tests (8 unit and integration tests)
+# Run tests (16 unit and integration tests)
 cargo test
 
 # Build release binary
