@@ -1,16 +1,24 @@
-# Wino Local Docs
+# Wino Documentation Hub
 
-You find all docs in this folder. You need no internet. You read them offline.
+Welcome to the **Wino** documentation index. All documentation and architectural specifications are self-contained within this repository for offline reference.
 
-## Guides
+---
 
-| Doc | What you get |
+## Technical Guides & Specifications
+
+| Document | Description |
 | :--- | :--- |
-| [UI Guide](./UI_GUIDE.md) | You see 16 menus with local screenshots. You learn each button, metric, and step. |
-| [Architecture Guide](../ARCHITECTURE.md) | You see the Win32 stack, threading, and safety model. |
-| [Contributing Guide](../CONTRIBUTING.md) | You see how you add rules, tag risk, and ship a PR. |
+| **[UI & Feature Walkthrough Guide](./UI_GUIDE.md)** | Comprehensive visual tour and operational walkthrough of all 16 panels, featuring embedded native screenshots and detailed capability breakdowns. |
+| **[Architecture & Technical Design](../ARCHITECTURE.md)** | In-depth engineering specification detailing native Win32 FFI bindings, zero-PowerShell architecture, safety state machines, and the font pipeline. |
+| **[Contributing Guidelines](../CONTRIBUTING.md)** | Contribution standards, declarative JSON rule schemas, risk level classifications, and local verification workflows. |
 
-## Assets
+---
 
-- `docs/screenshots/`: You see 16 PNG files. Each file shows one menu.
-- `scripts/capture.ps1`: You run it to refresh all screenshots after a UI change.
+## Documentation Assets & Utilities
+
+- **`docs/screenshots/`**: High-resolution, uncompressed PNG screenshots capturing all 16 navigation tabs rendered from live application builds.
+- **`scripts/capture.ps1`**: Automated PowerShell capture harness invoking `capture_screenshots.exe` to synchronously capture all UI tabs after visual modifications.
+
+---
+
+*Wino — Built with Rust for Windows 10 & 11.*

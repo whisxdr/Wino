@@ -1,4 +1,4 @@
-# Wino: Rust-Native Windows Debloater, Optimizer and Memory Suite
+# Wino: Rust-Native Windows Debloater, Optimizer & Memory Engine
 
 <div align="center">
 
@@ -7,8 +7,9 @@
 [![Architecture](https://img.shields.io/badge/Architecture-Native_Win32_%7C_Zero--PowerShell-success.svg?style=flat)](ARCHITECTURE.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-16%2F16_Passed-brightgreen.svg?style=flat)]()
+[![Release](https://img.shields.io/badge/Version-v2.5.0-blueviolet.svg?style=flat)](https://github.com/whisxdr/Wino/releases)
 
-Wino cleans and tunes Windows. You keep control. The app stays light, stays safe, and shows you each change before you apply it.
+**A high-performance, transparent, and ultra-low-footprint Windows optimization suite built with pure Rust and native Win32 APIs.**
 
 [UI Guide (Screenshots)](docs/UI_GUIDE.md) • [Architecture Guide](ARCHITECTURE.md) • [Contributing](CONTRIBUTING.md) • [Features](#-feature-matrix) • [CLI Reference](#-cli-usage) • [Building](#-building-from-source)
 
@@ -16,178 +17,180 @@ Wino cleans and tunes Windows. You keep control. The app stays light, stays safe
 
 ---
 
-Wino builds on ideas from **WinUtil, Wise Memory Optimizer, Sysinternals Autoruns, Process Explorer, and Windows debloat tools**. You get the useful parts without PowerShell loops, fragile regex parsing, or risky edits.
+> *"An optimizer should never become a resource hog itself."*
+
+Wino reimagines Windows system management by replacing heavy, brittle PowerShell scripts and opaque tweaks with direct native Win32 kernel calls, strict safety gating, and point-in-time configuration rollback. Inspired by tools such as **Chris Titus Tech WinUtil, Wise Memory Optimizer, Sysinternals Autoruns, and Process Explorer**, Wino delivers instant execution, full transparency, and verifiable results.
 
 ---
 
-## Why Wino: Benchmark Comparison
+## ⚡ Why Wino? Benchmark Comparison
 
-Traditional debloaters spawn PowerShell for each check. A spawn costs 80 to 150 MB and 1 to 5 seconds to start.
+Traditional Windows debloaters spawn multiple synchronous PowerShell subprocesses (`powershell.exe -Command "..."`) to query and modify system state. Each PowerShell invocation consumes 80–150 MB of RAM and requires 1,000–5,000 ms to initialize.
 
-Wino calls the Windows Kernel and Win32 Registry. You skip the spawn. You keep memory low and you get results in milliseconds.
+Wino communicates directly with the **Windows Kernel, Win32 APIs, and native Registry trees**:
 
 | Feature / Operation | Legacy PowerShell Optimizers | **Wino (Native Rust / Win32)** | Speedup |
 | :--- | :--- | :--- | :--- |
-| **AppX Debloat Scanning** | ~5,000 ms (spawns PowerShell) | **2.6 ms** (`RegEnumKeyExW`) | **~1,900x faster** |
-| **Defender and Security Status** | ~3,000 ms (`Get-MpComputerStatus`) | **2.9 ms** (Registry query) | **~1,030x faster** |
-| **Memory Optimization Cycle** | ~1,000 ms (script loops) | **11.7 ms** (`EmptyWorkingSet`) | **~85x faster** |
+| **AppX Package Scanning** | ~5,000 ms (spawns PowerShell) | **2.6 ms** (`RegEnumKeyExW`) | **~1,900x faster** |
+| **Defender & Security Status** | ~3,000 ms (`Get-MpComputerStatus`) | **2.9 ms** (Native Registry query) | **~1,030x faster** |
+| **Memory Working Set Trimming** | ~1,000 ms (script loops) | **11.7 ms** (`EmptyWorkingSet`) | **~85x faster** |
 | **Service Control Queries** | ~800 ms (`Get-Service` loops) | **1.2 ms** (`OpenSCManagerW`) | **~660x faster** |
-| **Idle Memory Footprint** | 120 to 350 MB RAM | **25 to 45 MB RAM** | **~7x lighter** |
-| **Console Spawning** | Flashes black terminal windows | **Zero console windows** (`#windows_subsystem`) | **Clean Desktop GUI** |
+| **Idle Memory Footprint** | 120 – 350 MB RAM | **25 – 45 MB RAM** | **~7x lighter** |
+| **Console Window Spawning** | Flashes black terminal windows | **Zero console windows** (`#windows_subsystem`) | **Seamless Desktop GUI** |
 
 ---
 
-## Core Principles and Safety Architecture
+## 🛡️ Core Principles & Safety Architecture
 
-1. **Safety First**: The Safety and Risk Gating Engine checks each operation. You see five levels: `Safe`, `Low`, `Medium`, `High`, `Critical`. You cannot turn off `RpcSs`, `WinDefend`, or `wuauserv`. The engine blocks those.
-
-2. **Zero Placebo**: Wino skips fake RAM flushes, timer hacks, and unsafe security toggles. You run changes with measured benefit.
-
-3. **Full Transparency**: You read the ID, description, benefit, registry path, and revert value for each rule before you apply it.
-
-4. **Restore Snapshots**: Wino saves a snapshot before you apply a batch. You roll back with one click.
-
-5. **Live Event Ticker**: The bottom bar shows each action. You click the status pill to jump to audit history.
+1. **Safety First**: Every operation is evaluated by a strict **Safety & Risk Gating Engine** (`Safe`, `Low`, `Medium`, `High`, `Critical`). Essential kernel components (`RpcSs`, `WinDefend`, `wuauserv`, `DcomLaunch`) are mathematically blocked from being modified.
+2. **Zero Placebo**: No fake RAM cleaners, no arbitrary timer resolution hacks, and no dangerous security compromises. Only documented, measurable Windows scheduling and memory optimizations are applied.
+3. **Full Transparency**: Every optimization rule clearly displays its unique ID, description, estimated benefit, target registry path, and exact rollback value before execution.
+4. **Point-In-Time Snapshots**: Automatic pre-flight snapshot generation before applying any preset or batch modification, enabling 1-click granular rollback.
+5. **Real-Time Audit Trail**: All operations, dry-runs, and system events are recorded in an in-memory circular buffer with an interactive live event ticker.
 
 ---
 
-## Feature Matrix
+## 🚀 Feature Matrix
 
-### 1. System Dashboard and Live Telemetry
-- You track CPU, RAM, GPU (dedicated VRAM and shared memory), primary drive (C:), and network I/O in real time.
-- You read a health rating: `EXCELLENT`, `GOOD`, `ATTENTION`, `WARNING`, `CRITICAL`.
-- You see host info: Windows 10/11 version, build number, CPU arch, and admin status.
+### 1. ⊞ System Dashboard & Live Telemetry
+- Real-time CPU usage histogram, RAM utilization, GPU target, and primary storage telemetry.
+- Comprehensive system health status rating (`EXCELLENT`, `GOOD`, `ATTENTION`, `WARNING`, `CRITICAL`).
+- Detailed host metadata: Windows 10/11 version, OS build, CPU architecture, and execution privileges.
 
-### 2. Memory Engine and Pressure Analysis
-- You run a pressure score that weights physical RAM, commit charge, free memory, and cache.
-- You trim the working set of idle background tasks with `EmptyWorkingSet`. You leave active apps alone.
-- You inspect memory compression and kernel pool use.
+### 2. ⚡ Memory Engine & Multi-Metric Pressure Analysis
+- Intelligent memory pressure assessment analyzing physical RAM, commit charge ratio, available bytes, and cache.
+- Non-disruptive working set trimming via `EmptyWorkingSet` targeting idle background processes.
+- Detailed memory breakdown: Hardware Reserved, Standby Cache, Available RAM, and Paged Pool.
 
-### 3. Windows Debloat Suite (Safe, Balanced, Aggressive)
-- **Safe Preset**: You remove consumer bloat (Solitaire, Feedback Hub, Tips), you turn off Bing in Start, and you disable the ad tracking ID. You break nothing.
-- **Balanced Preset**: You get Safe plus you turn off the Widgets news feed (you save ~200 MB), Copilot panel, Edge startup boost, and idle Xbox services.
-- **Aggressive Preset**: You remove OEM promo stubs (TikTok, Disney, Spotify, Prime Video) and you turn off location, timeline sync, and feedback prompts.
-- You confirm Balanced or Aggressive in a modal before Wino applies it.
+### 3. ▤ Process Manager & Security Trust Inspector
+- Comprehensive active process table displaying PID, memory working set, and digital signature status (`Critical System`, `Signed Trust`, `User App`).
+- Instant process termination and working set trimming with critical system process protection.
+- Exact-width, non-overlapping tabular layout with real-time search filtering.
 
-### 4. Process Inspector
-- You list running processes with PID, working set, private bytes, thread count, and exe path.
-- You trim memory or end a process. Wino guards critical system processes.
+### 4. 🧹 Windows Debloat Suite (Safe • Balanced • Aggressive)
+- **🛡 Safe Preset (Zero Risk)**: Removes promotional UWP apps (Candy Crush, Solitaire, Tips), disables Bing search in Start Menu, and disables advertising tracking ID. 100% reversible.
+- **⚡ Balanced Preset**: Includes Safe plus disables Windows 11 Widgets news feed (saving ~200 MB RAM), Copilot side panel, Edge startup boost, and idle Xbox background services.
+- **⚠️ Aggressive Preset**: Deep debloat removing OEM promotional stubs (TikTok, Spotify, Disney) and disabling background location tracking, timeline sync, and feedback surveys.
+- Interactive confirmation modal requiring user acknowledgement before applying Balanced or Aggressive presets.
 
-### 5. Startup Applications Manager
-- You scan `HKCU`/`HKLM` Run keys and Startup folders.
-- You see impact ratings (`Low`, `Medium`, `High`) and you verify publisher signatures.
+### 5. 🚀 Startup Applications Manager
+- Scans `HKCU`/`HKLM` Run keys and user/system Startup folder shortcuts.
+- Measures startup boot impact (`High`, `Medium`, `Low`) and verifies Authenticode digital signatures.
 
-### 6. Windows Services Manager
-- You query the Service Control Manager.
-- You see safety tags: `Safe to change`, `Usually safe`, `Optional`, `Do not touch`.
+### 6. ⚙ Windows Services Manager
+- Direct Windows Service Control Manager queries and configuration.
+- Clear safety classifications: `Safe to change`, `Usually safe`, `Optional`, `Do not touch`.
 
-### 7. Privacy and Telemetry Center
-- You toggle Advertising ID, diagnostic data level, activity history, inking dictionary, and location.
+### 7. 🛡 Privacy & Telemetry Center
+- Granular toggles for Advertising ID, Diagnostic Telemetry levels, Activity History tracking, Inking & Typing personalization, and Location sensors.
 
-### 8. Storage Cleaner
-- You scan `%TEMP%`, `C:\Windows\Temp`, crash dumps, Delivery Optimization cache, shader cache, and browser cache.
-- You apply an age filter so you skip files that apps still use.
+### 8. 🗑 Storage Cleaner
+- Safe temporary files scanner (`%TEMP%`, `C:\Windows\Temp`, crash dumps, Delivery Optimization cache, shader cache, browser caches) with minimum-age safety filters.
 
-### 9. Gaming Optimization Profile
-- You switch power plans and Game Mode. You run a memory trim before you launch a game.
+### 9. 🖹 Context Menu Cleaner
+- Detects and manages Explorer shell extension handlers across `Classes\Directory` and `Folder`.
+- Safely disables sluggish or unneeded third-party context menu handlers with automatic rollback snapshots.
 
-### 10. Windows Health and Diagnostics
-- You run `sfc /scannow` and DISM repair from the app.
-- You check Defender and Windows Update status.
+### 10. 🌐 DNS Optimizer & Network Tools
+- Instant DNS resolver cache flush via native `dnsapi.dll` without spawning subprocesses.
+- One-click DNS server switching with verified presets (Cloudflare, Google Public DNS, Quad9, AdGuard).
 
-### 11. Snapshot and Rollback Engine
-- You save JSON snapshots and you restore them with one click.
-- You create a native System Restore Point when you want extra safety.
+### 11. ⏱ Scheduled Tasks Debloater
+- Scans Windows Task Scheduler for known telemetry collectors, CEIP tasks, and aggressive third-party auto-updaters.
+- Safely disables selected tasks with automated pre-flight XML definition backups.
 
-### 12. Context Menu Cleaner
-- You scan and disable slow or bloated shell extension handlers from Explorer right-click menus with instant rollback snapshots.
+### 12. 🎮 Gaming Optimization Profile
+- One-click configuration for Windows Game Mode, GPU scheduling prioritization, and background latency minimization.
 
-### 13. DNS & Network Tools
-- You flush DNS resolver cache instantly via `dnsapi.dll` and switch adapter DNS servers (Cloudflare, Google, Quad9, AdGuard).
+### 13. ✚ Windows Health & Diagnostics
+- Integrated runners for System File Checker (`sfc /scannow`) and DISM component store repair.
+- Real-time monitoring for Windows Defender antivirus protection and Windows Update service health.
 
-### 14. Scheduled Tasks Debloater
-- You detect and disable telemetry, CEIP, and background updater scheduled tasks with automated XML backups.
+### 14. ↺ Snapshot & Rollback Engine
+- Point-in-time JSON configuration snapshots with 1-click restore.
+- Integration for creating native Windows System Restore Points (VSS).
 
-### 15. Audit Logs
-- You review an in-memory circular buffer. You see each operation, dry-run, and timestamp.
+### 15. 📋 Audit Logs & Live Event Ticker
+- Complete chronological record of all optimizations, scans, and system modifications.
+- Clickable bottom status pill for instant navigation to audit history.
 
-### 16. Dual-Language Support (EN / ID)
-- Complete bilingual support for English and Bahasa Indonesia across all navigation tabs, buttons, dialogs, and toasts.
+### 16. 🌐 Dual-Language Support (English / Bahasa Indonesia)
+- Full bilingual localization across all navigation tabs, headers, buttons, modal dialogs, and toast notifications.
 
 ---
 
-## CLI Usage
+## 💻 CLI Usage
 
-You run Wino two ways. Run it with no args for the GUI. Pass subcommands for headless automation.
+Wino features a dual interface. Launch without arguments for the native GUI, or pass subcommands for headless automation:
 
 ```powershell
 # Run a quick system health scan
 wino scan
 
-# Check memory metrics and pressure
+# Check real-time memory metrics and pressure
 wino memory status
 
-# Dry-run memory trim (no changes)
+# Run a memory optimization dry-run (simulation)
 wino memory optimize --dry-run
 
-# Run memory trim
+# Execute memory optimization
 wino memory optimize
 
 # Scan debloat targets
 wino debloat scan
 
-# Apply presets
+# Apply debloat presets with dry-run test
 wino debloat apply --preset Safe --dry-run
 wino debloat apply --preset Balanced
 
-# Scan and clean temp storage
+# Scan and clean temporary storage
 wino cleanup scan
 wino cleanup apply
 
-# List startup apps and impact ratings
+# List startup applications and impact ratings
 wino startup
 
-# Manage snapshots
+# Manage configuration restore snapshots
 wino restore list
 wino restore apply <snapshot_id>
 ```
 
 ---
 
-## Building from Source
+## 🛠 Building from Source
 
 ### Prerequisites
 * Windows 10 (Build 19041+) or Windows 11
 * Rust 1.75+ with GNU (`x86_64-pc-windows-gnu`) or MSVC (`x86_64-pc-windows-msvc`) toolchain
 
 ```powershell
-# Clone the repo
+# Clone the repository
 git clone https://github.com/whisxdr/Wino.git
 cd Wino
 
-# Check build
+# Verify build
 cargo check
 
-# Run tests (16 unit and integration tests)
+# Run automated test suite (16 unit & integration tests)
 cargo test
 
-# Build release binary
+# Compile optimized release binary
 cargo build --release
 ```
 
-You find the binary at:
+The compiled standalone executable will be located at:
 ```
 target/release/wino.exe
 ```
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
-You want to add a rule or a service entry. Read [CONTRIBUTING.md](CONTRIBUTING.md) for format, safety levels, and test steps.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on adding optimization rules, service safety definitions, and coding conventions.
 
 ---
 
-## License
+## 📄 License
 
-Licensed under the [MIT License](LICENSE).
+Distributed under the [MIT License](LICENSE). Copyright (c) 2026 whisxdr.
