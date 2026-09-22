@@ -31,7 +31,7 @@ jobs:
       - name: Prepare Portable ZIP Archive
         shell: pwsh
         run: |
-          $tag = if ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } else { "v2.5.0" }
+          $tag = if ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } else { "v2.6.0" }
           New-Item -ItemType Directory -Force -Path "dist/Wino" | Out-Null
           Copy-Item "target/release/wino.exe" -Destination "dist/Wino/"
           Copy-Item "README.md" -Destination "dist/Wino/"

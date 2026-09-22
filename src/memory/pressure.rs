@@ -21,7 +21,7 @@ impl MemoryPressure {
 
     pub fn color_rgb(&self) -> (u8, u8, u8) {
         match self {
-            MemoryPressure::Low => (34, 197, 94),     // Green
+            MemoryPressure::Low => (34, 197, 94),      // Green
             MemoryPressure::Moderate => (234, 179, 8), // Yellow
             MemoryPressure::High => (249, 115, 22),    // Orange
             MemoryPressure::Critical => (239, 68, 68), // Red

@@ -44,7 +44,12 @@ pub fn scan_cleaner_targets() -> Vec<ScannedCleanItem> {
         let mut total_bytes = 0u64;
         let mut target_files = Vec::new();
 
-        scan_directory_files(&resolved, rule.min_age_hours, &mut total_bytes, &mut target_files);
+        scan_directory_files(
+            &resolved,
+            rule.min_age_hours,
+            &mut total_bytes,
+            &mut target_files,
+        );
 
         let file_count = target_files.len();
         if file_count > 0 {
@@ -77,7 +82,12 @@ fn resolve_path_template(template: &str) -> PathBuf {
     PathBuf::from(resolved)
 }
 
-fn scan_directory_files(dir: &Path, min_age_hours: u64, total_bytes: &mut u64, target_files: &mut Vec<PathBuf>) {
+fn scan_directory_files(
+    dir: &Path,
+    min_age_hours: u64,
+    total_bytes: &mut u64,
+    target_files: &mut Vec<PathBuf>,
+) {
     let now = SystemTime::now();
 
     if let Ok(entries) = fs::read_dir(dir) {

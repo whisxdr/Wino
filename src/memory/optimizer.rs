@@ -4,7 +4,9 @@ use crate::memory::pressure::MemoryPressure;
 use serde::{Deserialize, Serialize};
 use windows::Win32::Foundation::CloseHandle;
 use windows::Win32::System::ProcessStatus::EmptyWorkingSet;
-use windows::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_SET_QUOTA};
+use windows::Win32::System::Threading::{
+    OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_SET_QUOTA,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OptimizationReport {
@@ -23,7 +25,10 @@ pub fn optimize_memory(dry_run: bool) -> OptimizationReport {
     let processes = crate::monitoring::process::list_running_processes();
 
     if dry_run {
-        log_info("memory", "[DRY-RUN] Simulating memory working set trim and standby analysis.");
+        log_info(
+            "memory",
+            "[DRY-RUN] Simulating memory working set trim and standby analysis.",
+        );
         return OptimizationReport {
             before_used_bytes: before.stats.used_bytes,
             after_used_bytes: before.stats.used_bytes,
@@ -31,7 +36,10 @@ pub fn optimize_memory(dry_run: bool) -> OptimizationReport {
             before_pressure: before.pressure,
             after_pressure: before.pressure,
             processes_trimmed: processes.len(),
-            message: format!("Dry run: would analyze and safely trim working sets of {} candidate processes.", processes.len()),
+            message: format!(
+                "Dry run: would analyze and safely trim working sets of {} candidate processes.",
+                processes.len()
+            ),
             is_dry_run: true,
         };
     }
@@ -50,11 +58,8 @@ pub fn optimize_memory(dry_run: bool) -> OptimizationReport {
         }
 
         unsafe {
-            let handle_res = OpenProcess(
-                PROCESS_SET_QUOTA | PROCESS_QUERY_INFORMATION,
-                false,
-                p.pid,
-            );
+            let handle_res =
+                OpenProcess(PROCESS_SET_QUOTA | PROCESS_QUERY_INFORMATION, false, p.pid);
 
             if let Ok(handle) = handle_res {
                 if EmptyWorkingSet(handle).is_ok() {
@@ -69,7 +74,10 @@ pub fn optimize_memory(dry_run: bool) -> OptimizationReport {
     std::thread::sleep(std::time::Duration::from_millis(150));
 
     let after = capture_memory_snapshot();
-    let freed_bytes = before.stats.used_bytes.saturating_sub(after.stats.used_bytes);
+    let freed_bytes = before
+        .stats
+        .used_bytes
+        .saturating_sub(after.stats.used_bytes);
 
     let message = if freed_bytes > 50 * 1024 * 1024 {
         format!(
@@ -78,7 +86,8 @@ pub fn optimize_memory(dry_run: bool) -> OptimizationReport {
             freed_bytes as f64 / (1024.0 * 1024.0)
         )
     } else {
-        "Optimization completed. Memory was already healthy; no extensive cleanup was necessary.".to_string()
+        "Optimization completed. Memory was already healthy; no extensive cleanup was necessary."
+            .to_string()
     };
 
     log_info("memory", &message);

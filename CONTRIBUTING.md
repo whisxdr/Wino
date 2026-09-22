@@ -18,8 +18,15 @@ All pull requests and rule additions must satisfy these fundamental criteria:
    - `Medium`: Modifies diagnostic data collectors or removes OEM promotional stubs. Requires user confirmation.
    - `High`: Modifies advanced network or task configurations. Restricted to manual per-item execution.
    - `Critical`: Core kernel components (`RpcSs`, `WinDefend`, `wuauserv`, `DcomLaunch`). **Hard-blocked from modification.**
-4. **Zero PowerShell Spawning**: All system operations must interact directly with native Win32 APIs, Registry trees, or the Service Control Manager. Spawning `powershell.exe` for scanning or queries is strictly prohibited.
+4. **Native First**: All system operations must interact directly with native Win32 APIs, Registry trees, the Service Control Manager, or the power API. Spawning `powershell.exe` for scanning or queries is prohibited.
+
+   A subprocess is acceptable only where no practical native API exists. There are exactly six such cases in the project, each documented at its call site: `dism.exe` (optional features), `schtasks.exe` (toggling an existing task), `powercfg.exe` (duplicating a power scheme), `winget.exe` (an optional third-party provider), `sfc.exe` (component store repair), and one isolated `powershell.exe` call for AppX package removal. Every call routes through `core::proc`, which hides the console window, captures output with a length cap, inspects the exit code, and honours `dry_run` before spawning. No shell is ever involved: the program is executed with an argument vector, never a command string.
+
 5. **Protection of Critical Subsystems**: Essential Windows kernel services, identity subsystems, and security providers must never be modified or disabled.
+
+6. **Never Report Unknown as Healthy**: When a check cannot be queried, the result is `Unknown`. It is never folded into a passing verdict. This applies to every state query in the health, security, feature, and network subsystems.
+
+7. **No Fabricated Measurements**: A value that was not measured is not displayed. This applies to the recommendation engine, the benchmark, and the power manager (a setting the scheme does not expose renders no control rather than a default of zero).
 
 ---
 
@@ -74,18 +81,39 @@ Optimization rules are declaratively defined as structured JSON files within the
 Before submitting a pull request, run the following automated verification suite:
 
 ```powershell
-# 1. Format check
-cargo fmt --check
+# 1. Format
+cargo fmt --all
 
-# 2. Static analysis and linting
-cargo clippy --all-targets --all-features
+# 2. Static analysis at the release gate (warnings are errors)
+cargo clippy --all-targets --all-features -- -D warnings
 
-# 3. Execute automated test suite (16 unit & integration tests)
+# 3. Execute the automated test suite (275 unit & integration tests)
 cargo test
 
 # 4. Verify release compilation
 cargo build --release
 ```
+
+### Testing Scope
+
+Tests cover pure decision components: classifiers, thresholds, parsers, and
+serialization round-trips. That is deliberate. The decision logic is where a
+wrong answer is dangerous, and it is the part that can be verified without a
+live Windows subsystem. Behaviours that genuinely need the OS (registry reads,
+DISM, ICMP, service control) reach the same pure helpers at runtime and are not
+faked in tests.
+
+When adding a subsystem, add a test for its decision logic:
+
+* **Rule databases** (`data/*.json`): every rule must load, and no rule may mark
+  critical Windows infrastructure as safe to change.
+* **Safety Engine**: Critical is blocked, unsupported Windows is blocked, missing
+  administrator privileges are blocked, and safe operations pass.
+* **Profiles**: built-ins deserialize and validate, custom profiles round-trip
+  through TOML, and a profile containing a Critical step produces a skipped
+  outcome without attempting it.
+* **Localization**: every key in `KEYS` resolves in both English and Indonesian,
+  with no duplicates.
 
 ---
 

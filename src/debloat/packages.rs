@@ -27,7 +27,9 @@ pub fn get_installed_appx_packages() -> Vec<String> {
                 0,
                 KEY_READ,
                 &mut key,
-            ).is_ok() {
+            )
+            .is_ok()
+            {
                 let mut index = 0u32;
                 let mut name_buf = vec![0u16; 512];
 
@@ -77,18 +79,37 @@ pub fn is_package_installed(package_name_pattern: &str) -> bool {
 
 pub fn remove_appx_package(package_name_pattern: &str, dry_run: bool) -> Result<(), String> {
     if dry_run {
-        log_info("debloat", &format!("[DRY-RUN] Would remove AppX package: {}", package_name_pattern));
+        log_info(
+            "debloat",
+            &format!(
+                "[DRY-RUN] Would remove AppX package: {}",
+                package_name_pattern
+            ),
+        );
         return Ok(());
     }
 
     // 1. Resolve pattern -> exact full provisioned package name(s) natively via registry.
     let full_names = resolve_full_package_names(package_name_pattern);
     if full_names.is_empty() {
-        log_info("debloat", &format!("No installed provisioned package matches '{}'. Treating as already removed.", package_name_pattern));
+        log_info(
+            "debloat",
+            &format!(
+                "No installed provisioned package matches '{}'. Treating as already removed.",
+                package_name_pattern
+            ),
+        );
         return Ok(());
     }
 
-    log_info("debloat", &format!("Removing {} provisioned AppX package(s) via native DISM engine for pattern '{}'", full_names.len(), package_name_pattern));
+    log_info(
+        "debloat",
+        &format!(
+            "Removing {} provisioned AppX package(s) via native DISM engine for pattern '{}'",
+            full_names.len(),
+            package_name_pattern
+        ),
+    );
 
     let mut any_success = false;
     let mut last_error = String::new();
@@ -107,7 +128,10 @@ pub fn remove_appx_package(package_name_pattern: &str, dry_run: bool) -> Result<
 
         match output {
             Ok(out) if out.status.success() => {
-                log_info("debloat", &format!("DISM removed provisioned package: {}", full_name));
+                log_info(
+                    "debloat",
+                    &format!("DISM removed provisioned package: {}", full_name),
+                );
                 any_success = true;
             }
             Ok(out) => {
@@ -116,7 +140,10 @@ pub fn remove_appx_package(package_name_pattern: &str, dry_run: bool) -> Result<
                 let stderr = String::from_utf8_lossy(&out.stderr).trim().to_string();
                 let stdout = String::from_utf8_lossy(&out.stdout).trim().to_string();
                 last_error = if !stderr.is_empty() { stderr } else { stdout };
-                log_error("debloat", &format!("DISM failed for {}: {}", full_name, last_error));
+                log_error(
+                    "debloat",
+                    &format!("DISM failed for {}: {}", full_name, last_error),
+                );
             }
             Err(e) => {
                 last_error = e.to_string();
@@ -126,7 +153,10 @@ pub fn remove_appx_package(package_name_pattern: &str, dry_run: bool) -> Result<
     }
 
     if any_success {
-        log_info("debloat", &format!("Successfully removed package(s): {}", package_name_pattern));
+        log_info(
+            "debloat",
+            &format!("Successfully removed package(s): {}", package_name_pattern),
+        );
         Ok(())
     } else {
         Err(format!("DISM removal failed: {}", last_error))

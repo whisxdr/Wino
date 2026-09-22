@@ -14,7 +14,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 Write-Host "=========================================" -ForegroundColor Cyan
-Write-Host "       Wino Windows Installer v2.5.0     " -ForegroundColor Cyan
+Write-Host "       Wino Windows Installer v2.6.0     " -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 
 # 1. Determine Source Directory and Executable
@@ -74,7 +74,7 @@ $regPath = if ($isAdmin) { "HKLM:\Software\Microsoft\Windows\CurrentVersion\Unin
 New-Item -Path $regPath -Force | Out-Null
 
 Set-ItemProperty -Path $regPath -Name "DisplayName" -Value "Wino"
-Set-ItemProperty -Path $regPath -Name "DisplayVersion" -Value "2.5.0"
+Set-ItemProperty -Path $regPath -Name "DisplayVersion" -Value "2.6.0"
 Set-ItemProperty -Path $regPath -Name "Publisher" -Value "whisxdr"
 Set-ItemProperty -Path $regPath -Name "DisplayIcon" -Value "$InstallDir\wino.exe,0"
 Set-ItemProperty -Path $regPath -Name "InstallLocation" -Value $InstallDir

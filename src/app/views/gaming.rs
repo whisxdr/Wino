@@ -7,7 +7,11 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
     let colors = get_colors(ui.visuals().dark_mode);
     let game_mode_on = crate::gaming::optimizer::is_windows_game_mode_enabled();
 
-    section_header(ui, "Gaming Profile", "Optimize background latency and prioritize game thread execution");
+    section_header(
+        ui,
+        "Gaming Profile",
+        "Optimize background latency and prioritize game thread execution",
+    );
 
     // 1. Windows Game Mode Optimization Card (100% Full Width)
     action_card(
@@ -26,10 +30,14 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
             ui.label(RichText::new("Directs GPU and CPU scheduling priority to fullscreen game processes and minimizes background interruptions.").size(12.0).color(colors.text_secondary));
         },
         |ui| {
-            let btn = Button::new(RichText::new("⚡ Optimize for Gaming").strong().color(Color32::WHITE))
-                .fill(colors.accent)
-                .rounding(Rounding::same(6.0))
-                .min_size(Vec2::new(170.0, 34.0));
+            let btn = Button::new(
+                RichText::new("⚡ Optimize for Gaming")
+                    .strong()
+                    .color(Color32::WHITE),
+            )
+            .fill(colors.accent)
+            .rounding(Rounding::same(6.0))
+            .min_size(Vec2::new(170.0, 34.0));
 
             if ui.add(btn).clicked() {
                 let rep = crate::gaming::optimizer::enable_gaming_profile(false);
@@ -50,4 +58,3 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
         ui.label(RichText::new("Wino does NOT apply fake registry 'FPS tweaks', timer resolution hacks, or network placebo. Only documented Windows scheduling and memory optimizations are applied.").size(12.0).color(colors.text_muted));
     });
 }
-

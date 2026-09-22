@@ -27,11 +27,11 @@ impl SystemHealthRating {
 
     pub fn color_rgb(&self) -> (u8, u8, u8) {
         match self {
-            SystemHealthRating::Excellent => (34, 197, 94),   // Green
-            SystemHealthRating::Good => (16, 185, 129),       // Emerald
-            SystemHealthRating::Attention => (234, 179, 8),   // Yellow
-            SystemHealthRating::Warning => (249, 115, 22),    // Orange
-            SystemHealthRating::Critical => (239, 68, 68),   // Red
+            SystemHealthRating::Excellent => (34, 197, 94), // Green
+            SystemHealthRating::Good => (16, 185, 129),     // Emerald
+            SystemHealthRating::Attention => (234, 179, 8), // Yellow
+            SystemHealthRating::Warning => (249, 115, 22),  // Orange
+            SystemHealthRating::Critical => (239, 68, 68),  // Red
         }
     }
 }
@@ -61,7 +61,8 @@ pub fn evaluate_system_health() -> SystemHealthReport {
 
     if !defender_active {
         issues.push("Real-time antivirus protection is turned off.".to_string());
-        recommendations.push("Enable Microsoft Defender Antivirus in Windows Security.".to_string());
+        recommendations
+            .push("Enable Microsoft Defender Antivirus in Windows Security.".to_string());
     }
 
     if pending_reboot {
@@ -70,7 +71,10 @@ pub fn evaluate_system_health() -> SystemHealthReport {
     }
 
     if disk.total_bytes > 0 && (disk.free_bytes as f32 / disk.total_bytes as f32) < 0.10 {
-        issues.push(format!("Primary system drive (C:) is running low on space ({:.1}% free).", 100.0 - disk.usage_pct));
+        issues.push(format!(
+            "Primary system drive (C:) is running low on space ({:.1}% free).",
+            100.0 - disk.usage_pct
+        ));
         recommendations.push("Run Storage Cleaner to remove temporary files.".to_string());
     }
 
@@ -84,7 +88,8 @@ pub fn evaluate_system_health() -> SystemHealthReport {
             recommendations.push("Trim idle background process working sets.".to_string());
         }
         MemoryPressure::Moderate => {
-            recommendations.push("Memory usage is moderate. Background trimming optional.".to_string());
+            recommendations
+                .push("Memory usage is moderate. Background trimming optional.".to_string());
         }
         MemoryPressure::Low => {}
     }

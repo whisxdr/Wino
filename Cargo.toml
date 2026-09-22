@@ -1,10 +1,10 @@
 [package]
 name = "wino"
-version = "2.5.0"
+version = "2.6.0"
 edition = "2021"
 default-run = "wino"
 authors = ["Wino Development Team"]
-description = "Lightweight, Safe, Transparent Rust-Native Windows Debloater, Optimizer & Memory Suite"
+description = "Lightweight, Safe, Transparent Rust-Native Windows System Management Suite"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 
@@ -37,11 +37,13 @@ windows = { version = "0.58", features = [
     "Win32_Storage_FileSystem",
     "Win32_NetworkManagement_IpHelper",
     "Win32_NetworkManagement_Ndis",
+    "Win32_Networking_WinSock",
     "Win32_Graphics_Dxgi",
     "Win32_System_Memory",
     "Win32_System_SystemServices",
     "Win32_System_Console",
     "Win32_System_Restore",
+    "Win32_System_Power",
     "Win32_NetworkManagement_Dns",
     "Win32_System_LibraryLoader",
     "Win32_UI_Shell",

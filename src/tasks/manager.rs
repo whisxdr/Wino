@@ -20,9 +20,14 @@ pub fn set_task_enabled(task_path: &str, enable: bool, dry_run: bool) -> Result<
 
     if !enable {
         // Snapshot the previous state so rollback can re-enable the task.
+        // Capture the on-disk XML before the change: restoring a task needs its
+        // original triggers and actions, which an enabled flag cannot rebuild.
+        let xml_definition = crate::tasks::scanner::read_task_xml(task_path);
         let entry = TaskBackupEntry {
             task_path: task_path.to_string(),
             previous_enabled: true,
+            xml_readable: xml_definition.is_some(),
+            xml_definition,
         };
         create_snapshot_for_tasks(&format!("Disable scheduled task {}", task_path), &[entry]);
     }
@@ -38,10 +43,16 @@ pub fn set_task_enabled(task_path: &str, enable: bool, dry_run: bool) -> Result<
         Ok(())
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-        let msg = format!("schtasks failed for '{}' (exit {:?}): {}",
+        let msg = format!(
+            "schtasks failed for '{}' (exit {:?}): {}",
             task_path,
             output.status.code(),
-            if stderr.is_empty() { "access denied or task not found".to_string() } else { stderr });
+            if stderr.is_empty() {
+                "access denied or task not found".to_string()
+            } else {
+                stderr
+            }
+        );
         log_error("tasks", &msg);
         Err(msg)
     }
@@ -49,7 +60,9 @@ pub fn set_task_enabled(task_path: &str, enable: bool, dry_run: bool) -> Result<
 
 /// Verify a task path exists on disk in the task store.
 pub fn task_exists_on_disk(task_path: &str) -> bool {
-    let Some(root) = tasks_root() else { return false };
+    let Some(root) = tasks_root() else {
+        return false;
+    };
     let rel = task_path.trim_start_matches('\\');
     root.join(rel).is_file()
 }

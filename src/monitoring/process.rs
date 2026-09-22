@@ -22,9 +22,21 @@ pub struct ProcessItem {
 }
 
 const CRITICAL_PROCESS_NAMES: &[&str] = &[
-    "system", "smss.exe", "csrss.exe", "wininit.exe", "services.exe", "lsass.exe",
-    "winlogon.exe", "svchost.exe", "dwm.exe", "fontdrvhost.exe", "sihost.exe",
-    "explorer.exe", "taskhostw.exe", "runtimebroker.exe", "ctfmon.exe",
+    "system",
+    "smss.exe",
+    "csrss.exe",
+    "wininit.exe",
+    "services.exe",
+    "lsass.exe",
+    "winlogon.exe",
+    "svchost.exe",
+    "dwm.exe",
+    "fontdrvhost.exe",
+    "sihost.exe",
+    "explorer.exe",
+    "taskhostw.exe",
+    "runtimebroker.exe",
+    "ctfmon.exe",
 ];
 
 pub fn is_critical_process(name: &str) -> bool {
@@ -61,15 +73,16 @@ pub fn list_running_processes() -> Vec<ProcessItem> {
                     let is_critical = is_critical_process(&name);
                     let (mem_bytes, exe_path) = get_process_details(pid);
 
-                    let (is_signed, publisher) = if is_critical || exe_path.to_lowercase().starts_with("c:\\windows\\") {
-                        (true, "Microsoft Windows".to_string())
-                    } else if exe_path.to_lowercase().contains("program files") {
-                        (true, "Verified Application".to_string())
-                    } else if !exe_path.is_empty() {
-                        (false, "User Process".to_string())
-                    } else {
-                        (false, "System".to_string())
-                    };
+                    let (is_signed, publisher) =
+                        if is_critical || exe_path.to_lowercase().starts_with("c:\\windows\\") {
+                            (true, "Microsoft Windows".to_string())
+                        } else if exe_path.to_lowercase().contains("program files") {
+                            (true, "Verified Application".to_string())
+                        } else if !exe_path.is_empty() {
+                            (false, "User Process".to_string())
+                        } else {
+                            (false, "System".to_string())
+                        };
 
                     results.push(ProcessItem {
                         pid,
@@ -112,7 +125,9 @@ fn get_process_details(pid: u32) -> (u64, String) {
             handle,
             &mut mem_counters as *mut _ as *mut _,
             std::mem::size_of::<PROCESS_MEMORY_COUNTERS_EX>() as u32,
-        ).is_ok() {
+        )
+        .is_ok()
+        {
             mem_counters.WorkingSetSize as u64
         } else {
             0
@@ -126,7 +141,9 @@ fn get_process_details(pid: u32) -> (u64, String) {
             PROCESS_NAME_WIN32,
             PWSTR(path_buf.as_mut_ptr()),
             &mut path_len,
-        ).is_ok() {
+        )
+        .is_ok()
+        {
             String::from_utf16_lossy(&path_buf[..path_len as usize])
         } else {
             String::new()

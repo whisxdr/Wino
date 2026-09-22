@@ -31,7 +31,11 @@ pub fn get_ram_stats() -> RamStats {
         };
 
         let mem_ok = GlobalMemoryStatusEx(&mut mem_status).is_ok();
-        let perf_ok = GetPerformanceInfo(&mut perf_info, std::mem::size_of::<PERFORMANCE_INFORMATION>() as u32).is_ok();
+        let perf_ok = GetPerformanceInfo(
+            &mut perf_info,
+            std::mem::size_of::<PERFORMANCE_INFORMATION>() as u32,
+        )
+        .is_ok();
 
         if !mem_ok {
             return RamStats::default();
@@ -73,7 +77,9 @@ pub fn get_ram_stats() -> RamStats {
         let commit_used_bytes = if perf_ok {
             (perf_info.CommitTotal as u64) * page_size
         } else {
-            mem_status.ullTotalPageFile.saturating_sub(mem_status.ullAvailPageFile)
+            mem_status
+                .ullTotalPageFile
+                .saturating_sub(mem_status.ullAvailPageFile)
         };
 
         let commit_limit_bytes = if perf_ok {
@@ -83,7 +89,11 @@ pub fn get_ram_stats() -> RamStats {
         };
 
         let (process_count, handle_count, thread_count) = if perf_ok {
-            (perf_info.ProcessCount as usize, perf_info.HandleCount, perf_info.ThreadCount)
+            (
+                perf_info.ProcessCount as usize,
+                perf_info.HandleCount,
+                perf_info.ThreadCount,
+            )
         } else {
             (0, 0, 0)
         };

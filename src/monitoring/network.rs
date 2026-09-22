@@ -1,7 +1,9 @@
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
-use windows::Win32::NetworkManagement::IpHelper::{FreeMibTable, GetIfTable2, MIB_IF_ROW2, MIB_IF_TABLE2};
+use windows::Win32::NetworkManagement::IpHelper::{
+    FreeMibTable, GetIfTable2, MIB_IF_ROW2, MIB_IF_TABLE2,
+};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct NetworkStats {

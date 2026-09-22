@@ -86,7 +86,9 @@ pub fn read_string(hive: HKEY, path: &str, value_name: &str) -> Option<String> {
 
         // Decode UTF-16 payload; strip trailing NULs.
         let words: Vec<u16> = buf[..size as usize]
-            .chunks_exact(2)
+            .as_chunks::<2>()
+            .0
+            .iter()
             .map(|c| u16::from_ne_bytes([c[0], c[1]]))
             .take_while(|&w| w != 0)
             .collect();
@@ -99,9 +101,8 @@ pub fn write_string(hive: HKEY, path: &str, value_name: &str, data: &str) -> Res
     let path_w = wide(path);
     let name_w = wide(value_name);
     let data_w: Vec<u16> = data.encode_utf16().chain(std::iter::once(0)).collect();
-    let bytes: &[u8] = unsafe {
-        std::slice::from_raw_parts(data_w.as_ptr().cast(), data_w.len() * 2)
-    };
+    let bytes: &[u8] =
+        unsafe { std::slice::from_raw_parts(data_w.as_ptr().cast(), data_w.len() * 2) };
     let mut key = HKEY::default();
 
     unsafe {
@@ -119,19 +120,16 @@ pub fn write_string(hive: HKEY, path: &str, value_name: &str, data: &str) -> Res
         if open_res.is_err() {
             return Err(format!("Failed to open/create key '{}'", path));
         }
-        let set_res = RegSetValueExW(
-            key,
-            PCWSTR(name_w.as_ptr()),
-            0,
-            REG_SZ,
-            Some(bytes),
-        );
+        let set_res = RegSetValueExW(key, PCWSTR(name_w.as_ptr()), 0, REG_SZ, Some(bytes));
         let _ = RegCloseKey(key);
 
         if set_res.is_ok() {
             Ok(())
         } else {
-            Err(format!("Failed to write string value '{}' in '{}'", value_name, path))
+            Err(format!(
+                "Failed to write string value '{}' in '{}'",
+                value_name, path
+            ))
         }
     }
 }
@@ -154,4 +152,3 @@ pub fn delete_value(hive: HKEY, path: &str, value_name: &str) -> Result<(), Stri
         Ok(())
     }
 }
-

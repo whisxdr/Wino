@@ -10,14 +10,25 @@ pub fn get_recommendations(stats: &RamStats, pressure: MemoryPressure) -> Vec<St
         }
         MemoryPressure::Moderate => {
             if stats.usage_pct > 75.0 {
-                recs.push(format!("RAM usage is {:.0}%. Consider trimming idle background processes.", stats.usage_pct));
+                recs.push(format!(
+                    "RAM usage is {:.0}%. Consider trimming idle background processes.",
+                    stats.usage_pct
+                ));
             }
-            if stats.commit_limit_bytes > 0 && (stats.commit_used_bytes as f32 / stats.commit_limit_bytes as f32) > 0.80 {
-                recs.push("Commit charge is elevated. Review high-memory apps in Processes tab.".to_string());
+            if stats.commit_limit_bytes > 0
+                && (stats.commit_used_bytes as f32 / stats.commit_limit_bytes as f32) > 0.80
+            {
+                recs.push(
+                    "Commit charge is elevated. Review high-memory apps in Processes tab."
+                        .to_string(),
+                );
             }
         }
         MemoryPressure::High => {
-            recs.push("High memory pressure detected. Recommended action: Smart Memory Optimization.".to_string());
+            recs.push(
+                "High memory pressure detected. Recommended action: Smart Memory Optimization."
+                    .to_string(),
+            );
             recs.push("Check for memory-heavy background tabs and startup services.".to_string());
         }
         MemoryPressure::Critical => {

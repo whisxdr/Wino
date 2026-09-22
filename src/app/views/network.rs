@@ -22,13 +22,21 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
                 ui.label(RichText::new("DNS Resolver Cache").size(14.5).strong());
             });
             ui.add_space(2.0);
-            ui.label(RichText::new(tr(lang, "net.flush_hint")).size(12.0).color(colors.text_secondary));
+            ui.label(
+                RichText::new(tr(lang, "net.flush_hint"))
+                    .size(12.0)
+                    .color(colors.text_secondary),
+            );
         },
         |ui| {
-            let flush_btn = Button::new(RichText::new(tr(lang, "net.flush_cache")).strong().color(Color32::WHITE))
-                .fill(colors.accent)
-                .rounding(Rounding::same(6.0))
-                .min_size(Vec2::new(160.0, 32.0));
+            let flush_btn = Button::new(
+                RichText::new(tr(lang, "net.flush_cache"))
+                    .strong()
+                    .color(Color32::WHITE),
+            )
+            .fill(colors.accent)
+            .rounding(Rounding::same(6.0))
+            .min_size(Vec2::new(160.0, 32.0));
             if ui.add(flush_btn).clicked() {
                 match flush_dns_cache() {
                     Ok(msg) => state.set_toast(&msg),
@@ -44,7 +52,11 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
     card_container(ui, |ui| {
         ui.horizontal(|ui| {
             ui.label(RichText::new("⚡").size(15.0).color(colors.secondary));
-            ui.label(RichText::new(tr(lang, "net.preset_label")).size(14.5).strong());
+            ui.label(
+                RichText::new(tr(lang, "net.preset_label"))
+                    .size(14.5)
+                    .strong(),
+            );
         });
         ui.add_space(8.0);
 
@@ -72,19 +84,31 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
         }
 
         ui.add_space(6.0);
-        ui.label(RichText::new(tr(lang, "net.auto_note")).size(11.0).color(colors.text_muted));
+        ui.label(
+            RichText::new(tr(lang, "net.auto_note"))
+                .size(11.0)
+                .color(colors.text_muted),
+        );
 
         ui.add_space(10.0);
         ui.horizontal(|ui| {
-            let apply_btn = Button::new(RichText::new(tr(lang, "net.apply_all_adapters")).strong().color(Color32::WHITE))
-                .fill(Color32::from_rgb(34, 197, 94))
-                .rounding(Rounding::same(6.0))
-                .min_size(Vec2::new(190.0, 32.0));
+            let apply_btn = Button::new(
+                RichText::new(tr(lang, "net.apply_all_adapters"))
+                    .strong()
+                    .color(Color32::WHITE),
+            )
+            .fill(Color32::from_rgb(34, 197, 94))
+            .rounding(Rounding::same(6.0))
+            .min_size(Vec2::new(190.0, 32.0));
             if ui.add(apply_btn).clicked() {
                 apply_selected_preset(state);
             }
             if !state.sys_info.is_admin {
-                ui.label(RichText::new(format!("⚠ {}", tr(lang, "net.admin_note"))).size(11.0).color(colors.warning));
+                ui.label(
+                    RichText::new(format!("⚠ {}", tr(lang, "net.admin_note")))
+                        .size(11.0)
+                        .color(colors.warning),
+                );
             }
         });
     });
@@ -98,7 +122,11 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
     let adapters = list_adapters();
     if adapters.is_empty() {
         card_container(ui, |ui| {
-            ui.label(RichText::new(tr(lang, "tasks.none_found")).size(12.0).color(colors.text_muted));
+            ui.label(
+                RichText::new(tr(lang, "tasks.none_found"))
+                    .size(12.0)
+                    .color(colors.text_muted),
+            );
         });
     }
 
@@ -120,7 +148,11 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
                     RichText::new(format!(
                         "{} {}",
                         tr(lang, "net.current_servers"),
-                        if adapter.current_name_server.is_empty() { "Automatic" } else { &adapter.current_name_server }
+                        if adapter.current_name_server.is_empty() {
+                            "Automatic"
+                        } else {
+                            &adapter.current_name_server
+                        }
                     ))
                     .size(11.0)
                     .color(colors.text_muted),
@@ -137,9 +169,16 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
                         match set_adapter_dns(adapter, preset, false) {
                             Ok(()) => {
                                 let _ = flush_dns_cache();
-                                state.set_toast(&format!("DNS '{}' applied to {}.", preset.name, name));
+                                state.set_toast(&format!(
+                                    "DNS '{}' applied to {}.",
+                                    preset.name, name
+                                ));
                             }
-                            Err(e) => state.record_event("Network", &format!("DNS update failed: {}", e), false),
+                            Err(e) => state.record_event(
+                                "Network",
+                                &format!("DNS update failed: {}", e),
+                                false,
+                            ),
                         }
                     }
                 }
@@ -150,7 +189,9 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
 }
 
 fn apply_selected_preset(state: &mut AppState) {
-    let Some(preset) = crate::network::dns::find_preset(&state.dns_preset_id) else { return };
+    let Some(preset) = crate::network::dns::find_preset(&state.dns_preset_id) else {
+        return;
+    };
     let adapters = list_adapters();
 
     if adapters.is_empty() {
@@ -174,5 +215,3 @@ fn apply_selected_preset(state: &mut AppState) {
         if flushed { " and DNS cache flushed" } else { "" }
     ));
 }
-
-

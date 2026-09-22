@@ -24,13 +24,21 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
 
     // 2. Search Bar
     let count_str = format!("{} privacy rules", state.privacy_items.len());
-    search_bar(ui, &mut state.search_query, "Filter privacy settings...", Some(&count_str));
+    search_bar(
+        ui,
+        &mut state.search_query,
+        "Filter privacy settings...",
+        Some(&count_str),
+    );
 
     let mut toggle_rule_id: Option<(String, bool)> = None;
     let search = state.search_query.to_lowercase();
 
     for item in &state.privacy_items {
-        if !search.is_empty() && !item.rule.name.to_lowercase().contains(&search) && !item.rule.description.to_lowercase().contains(&search) {
+        if !search.is_empty()
+            && !item.rule.name.to_lowercase().contains(&search)
+            && !item.rule.description.to_lowercase().contains(&search)
+        {
             continue;
         }
 
@@ -48,9 +56,17 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
                     }
                 });
                 ui.add_space(2.0);
-                ui.label(RichText::new(&item.rule.description).size(12.0).color(colors.text_secondary));
+                ui.label(
+                    RichText::new(&item.rule.description)
+                        .size(12.0)
+                        .color(colors.text_secondary),
+                );
                 ui.add_space(2.0);
-                ui.label(RichText::new(format!("Impact: {}", item.rule.impact)).size(11.0).color(colors.text_muted));
+                ui.label(
+                    RichText::new(format!("Impact: {}", item.rule.impact))
+                        .size(11.0)
+                        .color(colors.text_muted),
+                );
             },
             |ui| {
                 if item.is_applied {
@@ -78,9 +94,12 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
     if let Some((id, enable)) = toggle_rule_id {
         if let Some(item) = state.privacy_items.iter().find(|i| i.rule.id == id) {
             let res = crate::privacy::scanner::apply_privacy_rule(&item.rule, enable, false);
-            state.set_toast(&format!("Privacy policy updated: {} ({} steps)", item.rule.name, res.len()));
+            state.set_toast(&format!(
+                "Privacy policy updated: {} ({} steps)",
+                item.rule.name,
+                res.len()
+            ));
             state.refresh_privacy();
         }
     }
 }
-

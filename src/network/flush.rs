@@ -35,9 +35,15 @@ pub fn flush_dns_cache() -> Result<String, String> {
     // SAFETY: DnsFlushResolverCache takes no arguments and is thread-safe.
     let ok = unsafe { func() };
     if ok != 0 {
-        log_info("network", "DNS resolver cache flushed via native DnsFlushResolverCache");
+        log_info(
+            "network",
+            "DNS resolver cache flushed via native DnsFlushResolverCache",
+        );
         Ok("DNS resolver cache flushed successfully.".to_string())
     } else {
-        Err("DnsFlushResolverCache reported failure (DNS Client service may be stopped).".to_string())
+        Err(
+            "DnsFlushResolverCache reported failure (DNS Client service may be stopped)."
+                .to_string(),
+        )
     }
 }

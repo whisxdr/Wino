@@ -19,12 +19,30 @@ impl ScreenshotCapturer {
     fn new(cc: &eframe::CreationContext<'_>, output_dir: String) -> Self {
         // Initialize memory logger
         let _ = MemoryLogger::init_global(500);
-        log_info("System", "Wino Pro Engine v0.1.0 started with native Win32 subsystem");
-        log_info("Security", "Verified process integrity and Authenticode signature state");
-        log_info("Memory", "Initialized Working Set memory telemetry and pressure monitor");
-        log_info("Scanner", "Loaded 15 debloat definitions and 261 service profiles");
-        log_warn("Health", "Real-time antivirus protection is currently disabled");
-        log_info("Cleaner", "Storage cache analysis completed (~366 MB recoverable)");
+        log_info(
+            "System",
+            "Wino Pro Engine v0.1.0 started with native Win32 subsystem",
+        );
+        log_info(
+            "Security",
+            "Verified process integrity and Authenticode signature state",
+        );
+        log_info(
+            "Memory",
+            "Initialized Working Set memory telemetry and pressure monitor",
+        );
+        log_info(
+            "Scanner",
+            "Loaded 15 debloat definitions and 261 service profiles",
+        );
+        log_warn(
+            "Health",
+            "Real-time antivirus protection is currently disabled",
+        );
+        log_info(
+            "Cleaner",
+            "Storage cache analysis completed (~366 MB recoverable)",
+        );
 
         let mut app = WinoApp::new(cc);
 
@@ -43,6 +61,29 @@ impl ScreenshotCapturer {
         app.state.context_menu_items = wino::context_menu::scanner::scan_context_menu_handlers();
         app.state.task_items = wino::tasks::scanner::scan_scheduled_tasks();
 
+        // v2.6 panels: same synchronous preload so each new view has content.
+        app.state.apps = wino::apps::scanner::scan_installed_apps();
+        app.state.winget_status = wino::apps::winget::winget_status();
+        app.state.profiles = wino::profiles::manager::load_profiles();
+        app.state.profiles_selected = app.state.profiles.first().map(|p| p.id.clone());
+        app.state.power_plans = wino::power::manager::list_plans();
+        app.state.power_active_guid = wino::power::manager::active_plan_guid().unwrap_or_default();
+        app.state.power_settings = wino::power::settings::read_all_settings();
+        for setting in &app.state.power_settings {
+            if let Some(ac) = setting.ac_value {
+                app.state.power_edit_ac.insert(setting.id.clone(), ac);
+            }
+            if let Some(dc) = setting.dc_value {
+                app.state.power_edit_dc.insert(setting.id.clone(), dc);
+            }
+        }
+        app.state.features = wino::windows_features::scanner::scan_features();
+        app.state.network_report = wino::network::diagnostics::run_network_scan();
+        app.state.network_host_input = app.state.config.network.ping_host.clone();
+        app.state.health_center = wino::health::center::run_health_scan(false);
+        app.state.security_report = wino::security::center::scan_security_center();
+        app.state.recommendations = wino::recommendations::analyzer::analyze_system();
+
         let tabs = vec![
             (NavTab::Dashboard, "01_dashboard"),
             (NavTab::Memory, "02_memory_engine"),
@@ -53,13 +94,21 @@ impl ScreenshotCapturer {
             (NavTab::Privacy, "07_privacy_center"),
             (NavTab::Cleaner, "08_storage_cleaner"),
             (NavTab::ContextMenu, "14_context_menu"),
-            (NavTab::Network, "15_network_dns"),
+            (NavTab::Network, "15_network_center"),
             (NavTab::Tasks, "16_scheduled_tasks"),
             (NavTab::Gaming, "09_gaming_profile"),
-            (NavTab::Health, "10_windows_health"),
+            (NavTab::Health, "10_health_center"),
             (NavTab::Restore, "11_restore_points"),
             (NavTab::Logs, "12_audit_logs"),
             (NavTab::Settings, "13_settings"),
+            (NavTab::Apps, "17_applications"),
+            (NavTab::Profiles, "18_profiles"),
+            (NavTab::Power, "19_power"),
+            (NavTab::Features, "20_windows_features"),
+            (NavTab::Security, "21_security_center"),
+            (NavTab::Storage, "22_storage_analyzer"),
+            (NavTab::Recommendations, "23_recommendations"),
+            (NavTab::Benchmark, "24_benchmark"),
         ];
 
         Self {
@@ -111,7 +160,10 @@ impl ScreenshotCapturer {
             pixels.push(pixel.a());
         }
         file.write_all(&pixels).unwrap();
-        println!("[+] Successfully captured: {}.bmp ({}x{})", filename, width, height);
+        println!(
+            "[+] Successfully captured: {}.bmp ({}x{})",
+            filename, width, height
+        );
     }
 }
 
@@ -135,7 +187,10 @@ impl eframe::App for ScreenshotCapturer {
             self.capturing = false;
 
             if self.current_index >= self.tabs.len() {
-                println!("[*] All {} tabs captured successfully! Exiting...", self.tabs.len());
+                println!(
+                    "[*] All {} tabs captured successfully! Exiting...",
+                    self.tabs.len()
+                );
                 ctx.send_viewport_cmd(ViewportCommand::Close);
                 return;
             }
@@ -155,7 +210,13 @@ impl eframe::App for ScreenshotCapturer {
         if self.frame_counter == 3 && !self.capturing {
             self.capturing = true;
             let (tab, name) = self.tabs[self.current_index];
-            println!("[*] Capturing tab {}/{} ({} - {:?})...", self.current_index + 1, self.tabs.len(), name, tab);
+            println!(
+                "[*] Capturing tab {}/{} ({} - {:?})...",
+                self.current_index + 1,
+                self.tabs.len(),
+                name,
+                tab
+            );
             ctx.send_viewport_cmd(ViewportCommand::Screenshot);
         }
 
@@ -179,6 +240,11 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "Wino Screenshot Capturer",
         options,
-        Box::new(move |cc| Ok(Box::new(ScreenshotCapturer::new(cc, output_dir.to_string())))),
+        Box::new(move |cc| {
+            Ok(Box::new(ScreenshotCapturer::new(
+                cc,
+                output_dir.to_string(),
+            )))
+        }),
     )
 }

@@ -14,7 +14,8 @@ pub struct DetailedMemorySnapshot {
 pub fn capture_memory_snapshot() -> DetailedMemorySnapshot {
     let stats = get_ram_stats();
     let pressure = crate::memory::pressure::calculate_memory_pressure(&stats);
-    let (compression_enabled, compressed_bytes) = crate::memory::compression::get_compression_stats();
+    let (compression_enabled, compressed_bytes) =
+        crate::memory::compression::get_compression_stats();
     let paged_pool_bytes = stats.paged_pool_bytes;
     let nonpaged_pool_bytes = stats.nonpaged_pool_bytes;
 

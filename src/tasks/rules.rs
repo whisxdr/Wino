@@ -1,4 +1,4 @@
-﻿use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// Risk category of a scheduled task targeted for debloating.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -22,7 +22,10 @@ impl TaskCategory {
 
     /// Whether disabling this category is considered low-risk & reversible.
     pub fn is_safe_to_disable(&self) -> bool {
-        matches!(self, Self::Telemetry | Self::Feedback | Self::ThirdPartyUpdate)
+        matches!(
+            self,
+            Self::Telemetry | Self::Feedback | Self::ThirdPartyUpdate
+        )
     }
 }
 
@@ -142,24 +145,41 @@ pub const TASK_RULES: &[ScheduledTaskRule] = &[
 /// covered by the curated list above (matched against the on-disk task file).
 pub const THIRD_PARTY_HEURISTICS: &[&str] = &[
     // Adobe
-    "adobe", "acrobat", "arm.exe",
+    "adobe",
+    "acrobat",
+    "arm.exe",
     // Google
     "googleupdate",
     // Browsers / utilities
-    "opera_autoupdate", "brave", "vivaldi", "edgeupdate", "microsooftedgeupdate",
+    "opera_autoupdate",
+    "brave",
+    "vivaldi",
+    "edgeupdate",
+    "microsooftedgeupdate",
     // Vendor nagware / helpers
-    "nvidia web driver", "geforce experience", "onedrivestandaloneupdate",
-    "hp support", "lenovo", "dell update", "supportassist", "asus update",
-    "spotifyautostart", "steamwebhelper_", "discordupdate",
+    "nvidia web driver",
+    "geforce experience",
+    "onedrivestandaloneupdate",
+    "hp support",
+    "lenovo",
+    "dell update",
+    "supportassist",
+    "asus update",
+    "spotifyautostart",
+    "steamwebhelper_",
+    "discordupdate",
 ];
 
 /// Pure helper: does an on-disk task path look like a third-party updater?
 pub fn matches_third_party_heuristic(path_lower: &str) -> bool {
-    THIRD_PARTY_HEURISTICS.iter().any(|frag| path_lower.contains(frag))
+    THIRD_PARTY_HEURISTICS
+        .iter()
+        .any(|frag| path_lower.contains(frag))
 }
 
 /// Pure helper: find the matching curated rule for a task path (case-insensitive).
 pub fn find_rule(task_path_lower: &str) -> Option<&'static ScheduledTaskRule> {
-    TASK_RULES.iter().find(|r| r.task_path.to_lowercase() == task_path_lower)
+    TASK_RULES
+        .iter()
+        .find(|r| r.task_path.to_lowercase() == task_path_lower)
 }
-

@@ -27,26 +27,51 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
 
     // 2. Search Bar at Top
     let count_str = format!("{} tasks", state.task_items.len());
-    search_bar(ui, &mut state.search_query, "Filter scheduled tasks by name or path...", Some(&count_str));
+    search_bar(
+        ui,
+        &mut state.search_query,
+        "Filter scheduled tasks by name or path...",
+        Some(&count_str),
+    );
 
     // 3. Hint banner
     card_container(ui, |ui| {
         ui.horizontal(|ui| {
             ui.label(RichText::new("ℹ").size(15.0).color(colors.secondary));
             ui.vertical(|ui| {
-                ui.label(RichText::new(tr(lang, "tasks.hint")).size(12.0).color(colors.text_secondary));
-                ui.label(RichText::new(tr(lang, "tasks.snapshot_note")).size(11.0).color(colors.text_muted));
+                ui.label(
+                    RichText::new(tr(lang, "tasks.hint"))
+                        .size(12.0)
+                        .color(colors.text_secondary),
+                );
+                ui.label(
+                    RichText::new(tr(lang, "tasks.snapshot_note"))
+                        .size(11.0)
+                        .color(colors.text_muted),
+                );
             });
         });
         ui.add_space(2.0);
-        ui.label(RichText::new(tr(lang, "tasks.safe_note")).size(11.0).color(colors.text_muted));
+        ui.label(
+            RichText::new(tr(lang, "tasks.safe_note"))
+                .size(11.0)
+                .color(colors.text_muted),
+        );
     });
 
     ui.add_space(8.0);
 
-    if state.task_items.is_empty() && !state.pending_scans.contains(&crate::app::worker::ScanKind::Tasks) {
+    if state.task_items.is_empty()
+        && !state
+            .pending_scans
+            .contains(&crate::app::worker::ScanKind::Tasks)
+    {
         card_container(ui, |ui| {
-            ui.label(RichText::new(tr(lang, "tasks.none_found")).size(12.5).color(colors.text_muted));
+            ui.label(
+                RichText::new(tr(lang, "tasks.none_found"))
+                    .size(12.5)
+                    .color(colors.text_muted),
+            );
         });
         return;
     }
@@ -81,7 +106,11 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
                     }
                 });
                 ui.add_space(2.0);
-                ui.label(RichText::new(&item.description).size(11.5).color(colors.text_secondary));
+                ui.label(
+                    RichText::new(&item.description)
+                        .size(11.5)
+                        .color(colors.text_secondary),
+                );
                 ui.label(
                     RichText::new(&item.task_path)
                         .size(10.5)
@@ -90,18 +119,22 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
             },
             |ui| {
                 if item.is_enabled {
-                    let btn = Button::new(RichText::new(tr(lang, "tasks.disable_btn")).color(Color32::WHITE))
-                        .fill(Color32::from_rgb(239, 68, 68))
-                        .rounding(Rounding::same(6.0))
-                        .min_size(Vec2::new(110.0, 26.0));
+                    let btn = Button::new(
+                        RichText::new(tr(lang, "tasks.disable_btn")).color(Color32::WHITE),
+                    )
+                    .fill(Color32::from_rgb(239, 68, 68))
+                    .rounding(Rounding::same(6.0))
+                    .min_size(Vec2::new(110.0, 26.0));
                     if ui.add(btn).clicked() {
                         toggle_request = Some((idx, false));
                     }
                 } else {
-                    let btn = Button::new(RichText::new(tr(lang, "tasks.enable_btn")).color(Color32::WHITE))
-                        .fill(colors.accent)
-                        .rounding(Rounding::same(6.0))
-                        .min_size(Vec2::new(110.0, 26.0));
+                    let btn = Button::new(
+                        RichText::new(tr(lang, "tasks.enable_btn")).color(Color32::WHITE),
+                    )
+                    .fill(colors.accent)
+                    .rounding(Rounding::same(6.0))
+                    .min_size(Vec2::new(110.0, 26.0));
                     if ui.add(btn).clicked() {
                         toggle_request = Some((idx, true));
                     }
@@ -127,4 +160,3 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
         }
     }
 }
-

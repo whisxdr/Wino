@@ -2,7 +2,9 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::tasks::rules::{find_rule, matches_third_party_heuristic, ScheduledTaskRule, TaskCategory};
+use crate::tasks::rules::{
+    find_rule, matches_third_party_heuristic, ScheduledTaskRule, TaskCategory,
+};
 
 /// Root directory holding every registered task's XML definition.
 pub fn tasks_root() -> Option<PathBuf> {
@@ -56,7 +58,9 @@ fn walk(dir: &Path, rel: String, depth: u8, out: &mut Vec<ScheduledTaskItem>, bu
     if *budget == 0 || depth > 8 {
         return;
     }
-    let Ok(entries) = fs::read_dir(dir) else { return };
+    let Ok(entries) = fs::read_dir(dir) else {
+        return;
+    };
 
     for entry in entries.flatten() {
         if *budget == 0 {
@@ -103,15 +107,33 @@ fn walk(dir: &Path, rel: String, depth: u8, out: &mut Vec<ScheduledTaskItem>, bu
     }
 }
 
+/// Read a task's on-disk XML definition by its full task path.
+///
+/// Returns `None` when the definition is absent or ACL-restricted. Callers
+/// record that the XML could not be captured rather than substituting a
+/// placeholder, so a rollback never claims to restore a definition it does not
+/// have.
+pub fn read_task_xml(task_path: &str) -> Option<String> {
+    let root = tasks_root()?;
+    let rel = task_path.trim_start_matches('\\');
+    fs::read_to_string(root.join(rel)).ok()
+}
+
 /// Scan the scheduled-task store for known telemetry/CEIP/third-party tasks.
 /// Reading the native XML definitions keeps this scan locale-proof (no
 /// localized `schtasks /Query` text parsing).
 pub fn scan_scheduled_tasks() -> Vec<ScheduledTaskItem> {
     let mut results = Vec::new();
-    let Some(root) = tasks_root() else { return results };
+    let Some(root) = tasks_root() else {
+        return results;
+    };
     let mut budget: usize = 4096;
     walk(&root, String::new(), 0, &mut results, &mut budget);
-    results.sort_by(|a, b| a.category_label.cmp(&b.category_label).then(a.name.cmp(&b.name)));
+    results.sort_by(|a, b| {
+        a.category_label
+            .cmp(&b.category_label)
+            .then(a.name.cmp(&b.name))
+    });
     results
 }
 

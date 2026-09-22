@@ -2,7 +2,7 @@
 ; #######################################################################
 
 #define MyAppName "Wino"
-#define MyAppVersion "2.5.0"
+#define MyAppVersion "2.6.0"
 #define MyAppPublisher "whisxdr"
 #define MyAppURL "https://github.com/whisxdr/Wino"
 #define MyAppExeName "wino.exe"

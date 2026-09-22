@@ -2,7 +2,9 @@ use std::path::Path;
 
 pub fn is_system_directory(path: &str) -> bool {
     let lower = path.to_lowercase();
-    let windir = std::env::var("WINDIR").unwrap_or_else(|_| "C:\\Windows".to_string()).to_lowercase();
+    let windir = std::env::var("WINDIR")
+        .unwrap_or_else(|_| "C:\\Windows".to_string())
+        .to_lowercase();
     let sys32 = format!("{}\\system32", windir);
     let syswow64 = format!("{}\\syswow64", windir);
 
@@ -16,7 +18,10 @@ pub fn is_safe_deletion_target(path: &Path) -> bool {
         if lower.len() <= 3 && lower.ends_with(":\\") {
             return false;
         }
-        if lower == "c:\\windows" || lower == "c:\\windows\\system32" || lower == "c:\\program files" {
+        if lower == "c:\\windows"
+            || lower == "c:\\windows\\system32"
+            || lower == "c:\\program files"
+        {
             return false;
         }
     }

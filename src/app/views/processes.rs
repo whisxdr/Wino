@@ -13,11 +13,7 @@ fn table_cell<R>(
     add_contents: impl FnOnce(&mut Ui) -> R,
 ) -> R {
     let (rect, _) = ui.allocate_exact_size(Vec2::new(width, height), egui::Sense::hover());
-    let mut cell_ui = ui.new_child(
-        egui::UiBuilder::new()
-            .max_rect(rect)
-            .layout(layout),
-    );
+    let mut cell_ui = ui.new_child(egui::UiBuilder::new().max_rect(rect).layout(layout));
     cell_ui.set_clip_rect(rect.intersect(ui.clip_rect()));
     add_contents(&mut cell_ui)
 }
@@ -43,8 +39,17 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
     );
 
     // 2. Modern Unified Search Bar
-    let count_str = format!("{} {}", state.processes.len(), tr(lang, "proc.active_tasks"));
-    search_bar(ui, &mut state.search_query, tr(lang, "proc.filter_placeholder"), Some(&count_str));
+    let count_str = format!(
+        "{} {}",
+        state.processes.len(),
+        tr(lang, "proc.active_tasks")
+    );
+    search_bar(
+        ui,
+        &mut state.search_query,
+        tr(lang, "proc.filter_placeholder"),
+        Some(&count_str),
+    );
 
     // 3. Process Table Container (Spans 100% Full Width)
     card_container(ui, |ui| {
@@ -61,25 +66,76 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = gap;
 
-            table_cell(ui, name_col_w, 24.0, egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                ui.label(RichText::new(tr(lang, "proc.col_name")).strong().color(colors.text_primary));
-            });
-            table_cell(ui, pid_col_w, 24.0, egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(RichText::new(tr(lang, "proc.col_pid")).strong().color(colors.text_primary));
-            });
-            table_cell(ui, ws_col_w, 24.0, egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(RichText::new(tr(lang, "proc.col_working_set")).strong().color(colors.text_primary));
-            });
-            table_cell(ui, sec_col_w, 24.0, egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                ui.label(RichText::new(tr(lang, "proc.col_security")).strong().color(colors.text_primary));
-            });
-            table_cell(ui, act_col_w, 24.0, egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(RichText::new(tr(lang, "proc.col_action")).strong().color(colors.text_primary));
-            });
+            table_cell(
+                ui,
+                name_col_w,
+                24.0,
+                egui::Layout::left_to_right(egui::Align::Center),
+                |ui| {
+                    ui.label(
+                        RichText::new(tr(lang, "proc.col_name"))
+                            .strong()
+                            .color(colors.text_primary),
+                    );
+                },
+            );
+            table_cell(
+                ui,
+                pid_col_w,
+                24.0,
+                egui::Layout::right_to_left(egui::Align::Center),
+                |ui| {
+                    ui.label(
+                        RichText::new(tr(lang, "proc.col_pid"))
+                            .strong()
+                            .color(colors.text_primary),
+                    );
+                },
+            );
+            table_cell(
+                ui,
+                ws_col_w,
+                24.0,
+                egui::Layout::right_to_left(egui::Align::Center),
+                |ui| {
+                    ui.label(
+                        RichText::new(tr(lang, "proc.col_working_set"))
+                            .strong()
+                            .color(colors.text_primary),
+                    );
+                },
+            );
+            table_cell(
+                ui,
+                sec_col_w,
+                24.0,
+                egui::Layout::left_to_right(egui::Align::Center),
+                |ui| {
+                    ui.label(
+                        RichText::new(tr(lang, "proc.col_security"))
+                            .strong()
+                            .color(colors.text_primary),
+                    );
+                },
+            );
+            table_cell(
+                ui,
+                act_col_w,
+                24.0,
+                egui::Layout::right_to_left(egui::Align::Center),
+                |ui| {
+                    ui.label(
+                        RichText::new(tr(lang, "proc.col_action"))
+                            .strong()
+                            .color(colors.text_primary),
+                    );
+                },
+            );
         });
 
         ui.add_space(4.0);
-        let (sep_rect, _) = ui.allocate_exact_size(Vec2::new(ui.available_width(), 1.0), egui::Sense::hover());
+        let (sep_rect, _) =
+            ui.allocate_exact_size(Vec2::new(ui.available_width(), 1.0), egui::Sense::hover());
         ui.painter().rect_filled(sep_rect, 0.0, colors.border);
         ui.add_space(4.0);
 
@@ -88,7 +144,10 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
         let mut rendered_count = 0;
 
         for (idx, p) in state.processes.iter().enumerate() {
-            if !query.is_empty() && !p.name.to_lowercase().contains(&query) && !p.pid.to_string().contains(&query) {
+            if !query.is_empty()
+                && !p.name.to_lowercase().contains(&query)
+                && !p.pid.to_string().contains(&query)
+            {
                 continue;
             }
             rendered_count += 1;
@@ -109,45 +168,99 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
                         ui.spacing_mut().item_spacing.x = gap;
 
                         // Process Name (Truncated cleanly if super long)
-                        table_cell(ui, name_col_w - 8.0, row_h, egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                            ui.add(egui::Label::new(RichText::new(&p.name).strong().color(colors.text_primary)).truncate());
-                        });
+                        table_cell(
+                            ui,
+                            name_col_w - 8.0,
+                            row_h,
+                            egui::Layout::left_to_right(egui::Align::Center),
+                            |ui| {
+                                ui.add(
+                                    egui::Label::new(
+                                        RichText::new(&p.name).strong().color(colors.text_primary),
+                                    )
+                                    .truncate(),
+                                );
+                            },
+                        );
 
                         // PID
-                        table_cell(ui, pid_col_w, row_h, egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            ui.label(RichText::new(format!("{}", p.pid)).color(colors.text_muted));
-                        });
+                        table_cell(
+                            ui,
+                            pid_col_w,
+                            row_h,
+                            egui::Layout::right_to_left(egui::Align::Center),
+                            |ui| {
+                                ui.label(
+                                    RichText::new(format!("{}", p.pid)).color(colors.text_muted),
+                                );
+                            },
+                        );
 
                         // Memory Working Set
-                        table_cell(ui, ws_col_w, row_h, egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            ui.label(RichText::new(format!("{:.1} MB", p.memory_working_set_bytes as f64 / (1024.0 * 1024.0))).strong().color(colors.accent));
-                        });
+                        table_cell(
+                            ui,
+                            ws_col_w,
+                            row_h,
+                            egui::Layout::right_to_left(egui::Align::Center),
+                            |ui| {
+                                ui.label(
+                                    RichText::new(format!(
+                                        "{:.1} MB",
+                                        p.memory_working_set_bytes as f64 / (1024.0 * 1024.0)
+                                    ))
+                                    .strong()
+                                    .color(colors.accent),
+                                );
+                            },
+                        );
 
                         // Security Badge
-                        table_cell(ui, sec_col_w, row_h, egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                            if p.is_system_critical {
-                                status_badge(ui, tr(lang, "proc.badge_critical"), (239, 68, 68));
-                            } else if p.is_signed {
-                                status_badge(ui, tr(lang, "proc.badge_signed"), (78, 222, 163));
-                            } else {
-                                status_badge(ui, tr(lang, "proc.badge_user"), (138, 145, 160));
-                            }
-                        });
+                        table_cell(
+                            ui,
+                            sec_col_w,
+                            row_h,
+                            egui::Layout::left_to_right(egui::Align::Center),
+                            |ui| {
+                                if p.is_system_critical {
+                                    status_badge(
+                                        ui,
+                                        tr(lang, "proc.badge_critical"),
+                                        (239, 68, 68),
+                                    );
+                                } else if p.is_signed {
+                                    status_badge(ui, tr(lang, "proc.badge_signed"), (78, 222, 163));
+                                } else {
+                                    status_badge(ui, tr(lang, "proc.badge_user"), (138, 145, 160));
+                                }
+                            },
+                        );
 
                         // Action Button
-                        table_cell(ui, act_col_w, row_h, egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if p.is_system_critical {
-                                ui.label(RichText::new(tr(lang, "proc.protected")).color(colors.text_muted));
-                            } else {
-                                let end_btn = Button::new(RichText::new(tr(lang, "proc.end_task")).color(colors.danger))
+                        table_cell(
+                            ui,
+                            act_col_w,
+                            row_h,
+                            egui::Layout::right_to_left(egui::Align::Center),
+                            |ui| {
+                                if p.is_system_critical {
+                                    ui.label(
+                                        RichText::new(tr(lang, "proc.protected"))
+                                            .color(colors.text_muted),
+                                    );
+                                } else {
+                                    let end_btn = Button::new(
+                                        RichText::new(tr(lang, "proc.end_task"))
+                                            .color(colors.danger),
+                                    )
                                     .fill(colors.bg_card_hover)
                                     .rounding(Rounding::same(5.0))
                                     .min_size(Vec2::new(75.0, 22.0));
-                                if ui.add(end_btn).clicked() {
-                                    kill_target_pid = Some(p.pid);
+                                    if ui.add(end_btn).clicked() {
+                                        kill_target_pid = Some(p.pid);
+                                    }
                                 }
-                            }
-                        });
+                            },
+                        );
                     });
                 });
 
@@ -169,4 +282,3 @@ pub fn render(ui: &mut Ui, state: &mut AppState) {
         }
     });
 }
-

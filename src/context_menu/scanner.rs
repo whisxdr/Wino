@@ -67,10 +67,14 @@ const HANDLERS_SUFFIX: &str = "\\shellex\\ContextMenuHandlers";
 /// Resolve a CLSID to (friendly name, inproc server dll).
 fn resolve_clsid(clsid: &str) -> (String, String) {
     let path = format!("CLSID\\{}", clsid);
-    let name = regutil::read_string(HKEY_CLASSES_ROOT, &path, "")
-        .unwrap_or_else(|| clsid.to_string());
-    let dll = regutil::read_string(HKEY_CLASSES_ROOT, &format!("CLSID\\{}\\InprocServer32", clsid), "")
-        .unwrap_or_default();
+    let name =
+        regutil::read_string(HKEY_CLASSES_ROOT, &path, "").unwrap_or_else(|| clsid.to_string());
+    let dll = regutil::read_string(
+        HKEY_CLASSES_ROOT,
+        &format!("CLSID\\{}\\InprocServer32", clsid),
+        "",
+    )
+    .unwrap_or_default();
     (name, dll)
 }
 
@@ -78,15 +82,35 @@ fn resolve_clsid(clsid: &str) -> (String, String) {
 /// HKLM\Software\Classes and HKCU\Software\Classes — we must write where the
 /// entry actually lives.
 fn detect_store(key_path: &str) -> Option<HandlerStore> {
-    if regutil::read_string(HKEY_LOCAL_MACHINE, &format!("Software\\Classes\\{}", key_path), "").is_some() {
+    if regutil::read_string(
+        HKEY_LOCAL_MACHINE,
+        &format!("Software\\Classes\\{}", key_path),
+        "",
+    )
+    .is_some()
+    {
         return Some(HandlerStore::Machine);
     }
-    if regutil::read_string(HKEY_CURRENT_USER, &format!("Software\\Classes\\{}", key_path), "").is_some() {
+    if regutil::read_string(
+        HKEY_CURRENT_USER,
+        &format!("Software\\Classes\\{}", key_path),
+        "",
+    )
+    .is_some()
+    {
         return Some(HandlerStore::User);
     }
     // Fall back to machine even if only the key itself (no default value) exists there.
-    if !regutil::enum_subkeys(HKEY_LOCAL_MACHINE, &format!("Software\\Classes\\{}", parent_of(key_path))).is_empty()
-        || regutil::enum_subkeys(HKEY_CURRENT_USER, &format!("Software\\Classes\\{}", parent_of(key_path))).contains(&leaf_of(key_path).to_string())
+    if !regutil::enum_subkeys(
+        HKEY_LOCAL_MACHINE,
+        &format!("Software\\Classes\\{}", parent_of(key_path)),
+    )
+    .is_empty()
+        || regutil::enum_subkeys(
+            HKEY_CURRENT_USER,
+            &format!("Software\\Classes\\{}", parent_of(key_path)),
+        )
+        .contains(&leaf_of(key_path).to_string())
     {
         return Some(HandlerStore::Machine);
     }
@@ -133,7 +157,10 @@ pub fn scan_context_menu_handlers() -> Vec<ContextMenuEntry> {
             let (friendly_name, dll_path) = resolve_clsid(&clsid);
 
             // Prefer HKLM entries; skip duplicates surfaced by the merged view.
-            if entries.iter().any(|e: &ContextMenuEntry| e.key_path == key_path) {
+            if entries
+                .iter()
+                .any(|e: &ContextMenuEntry| e.key_path == key_path)
+            {
                 continue;
             }
 
@@ -152,6 +179,10 @@ pub fn scan_context_menu_handlers() -> Vec<ContextMenuEntry> {
         }
     }
 
-    entries.sort_by(|a, b| a.shell_root.cmp(&b.shell_root).then(a.friendly_name.cmp(&b.friendly_name)));
+    entries.sort_by(|a, b| {
+        a.shell_root
+            .cmp(&b.shell_root)
+            .then(a.friendly_name.cmp(&b.friendly_name))
+    });
     entries
 }

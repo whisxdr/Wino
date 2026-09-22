@@ -32,7 +32,11 @@ pub fn scan_privacy_items() -> Vec<ScannedPrivacyItem> {
     items
 }
 
-pub fn apply_privacy_rule(rule: &PrivacyRule, enable_protection: bool, dry_run: bool) -> Vec<ExecutionResult> {
+pub fn apply_privacy_rule(
+    rule: &PrivacyRule,
+    enable_protection: bool,
+    dry_run: bool,
+) -> Vec<ExecutionResult> {
     if !dry_run {
         let _ = create_snapshot(&format!("Privacy rule: {}", rule.name));
     }

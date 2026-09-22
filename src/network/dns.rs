@@ -29,10 +29,30 @@ impl DnsPreset {
     }
 }
 
-pub const PRESET_AUTOMATIC: DnsPreset = DnsPreset { id: "auto", name: "Automatic (DHCP)", primary: None, secondary: None };
-pub const PRESET_CLOUDFLARE: DnsPreset = DnsPreset { id: "cloudflare", name: "Cloudflare", primary: Some("1.1.1.1"), secondary: Some("1.0.0.1") };
-pub const PRESET_GOOGLE: DnsPreset = DnsPreset { id: "google", name: "Google", primary: Some("8.8.8.8"), secondary: Some("8.8.4.4") };
-pub const PRESET_QUAD9: DnsPreset = DnsPreset { id: "quad9", name: "Quad9", primary: Some("9.9.9.9"), secondary: Some("149.112.112.112") };
+pub const PRESET_AUTOMATIC: DnsPreset = DnsPreset {
+    id: "auto",
+    name: "Automatic (DHCP)",
+    primary: None,
+    secondary: None,
+};
+pub const PRESET_CLOUDFLARE: DnsPreset = DnsPreset {
+    id: "cloudflare",
+    name: "Cloudflare",
+    primary: Some("1.1.1.1"),
+    secondary: Some("1.0.0.1"),
+};
+pub const PRESET_GOOGLE: DnsPreset = DnsPreset {
+    id: "google",
+    name: "Google",
+    primary: Some("8.8.8.8"),
+    secondary: Some("8.8.4.4"),
+};
+pub const PRESET_QUAD9: DnsPreset = DnsPreset {
+    id: "quad9",
+    name: "Quad9",
+    primary: Some("9.9.9.9"),
+    secondary: Some("149.112.112.112"),
+};
 
 pub const ALL_PRESETS: &[DnsPreset] = &[
     PRESET_AUTOMATIC,
@@ -73,7 +93,12 @@ pub fn list_adapters() -> Vec<AdapterInfo> {
         adapters.push(AdapterInfo {
             guid,
             friendly_name: friendly,
-            current_name_server: regutil::read_string(HKEY_LOCAL_MACHINE, &interface_path, "NameServer").unwrap_or_default(),
+            current_name_server: regutil::read_string(
+                HKEY_LOCAL_MACHINE,
+                &interface_path,
+                "NameServer",
+            )
+            .unwrap_or_default(),
         });
     }
 
@@ -83,7 +108,11 @@ pub fn list_adapters() -> Vec<AdapterInfo> {
 /// Apply a DNS preset to one adapter (writes the NameServer override natively,
 /// no subprocess involved). Empty preset id "auto" clears the static override
 /// so DHCP-provided DNS takes over again.
-pub fn set_adapter_dns(adapter: &AdapterInfo, preset: &DnsPreset, dry_run: bool) -> Result<(), String> {
+pub fn set_adapter_dns(
+    adapter: &AdapterInfo,
+    preset: &DnsPreset,
+    dry_run: bool,
+) -> Result<(), String> {
     let interface_path = format!("{}\\{}", INTERFACES_KEY, adapter.guid);
 
     if dry_run {

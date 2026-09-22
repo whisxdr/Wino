@@ -8,7 +8,8 @@ use windows::Win32::Security::WinTrust::{
 };
 
 // Action GUID for generic Authenticode verification: {00aac56b-cd44-11d0-8cc2-00c04fc295ee}
-const WINTRUST_ACTION_GENERIC_VERIFY_V2: GUID = GUID::from_u128(0x00aac56b_cd44_11d0_8cc2_00c04fc295ee);
+const WINTRUST_ACTION_GENERIC_VERIFY_V2: GUID =
+    GUID::from_u128(0x00aac56b_cd44_11d0_8cc2_00c04fc295ee);
 
 pub fn is_file_signed(path_str: &str) -> bool {
     let path = Path::new(path_str);

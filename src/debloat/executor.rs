@@ -54,12 +54,17 @@ pub fn apply_debloat_rule(rule: &DebloatRule, dry_run: bool) -> Vec<ExecutionRes
                 details: "Would configure service startup mode.".to_string(),
             });
         } else {
-            let res = crate::services::manager::set_service_startup(svc, crate::services::manager::StartupType::Manual);
+            let res = crate::services::manager::set_service_startup(
+                svc,
+                crate::services::manager::StartupType::Manual,
+            );
             results.push(ExecutionResult {
                 success: res.is_ok(),
                 dry_run: false,
                 action: format!("Set service {} startup to Manual", svc),
-                details: res.err().unwrap_or_else(|| "Service startup mode set to Manual.".to_string()),
+                details: res
+                    .err()
+                    .unwrap_or_else(|| "Service startup mode set to Manual.".to_string()),
             });
         }
     }
@@ -71,7 +76,9 @@ pub fn is_rule_in_preset(rule_preset: &str, target_preset: &str) -> bool {
     match target_preset {
         "Safe" => rule_preset == "Safe",
         "Balanced" => rule_preset == "Safe" || rule_preset == "Balanced",
-        "Aggressive" => rule_preset == "Safe" || rule_preset == "Balanced" || rule_preset == "Aggressive",
+        "Aggressive" => {
+            rule_preset == "Safe" || rule_preset == "Balanced" || rule_preset == "Aggressive"
+        }
         _ => true,
     }
 }
@@ -80,16 +87,28 @@ pub fn apply_debloat_preset(preset: &str, dry_run: bool) -> Vec<ExecutionResult>
     let scanned = scan_debloat_items();
     let mut all_results = Vec::new();
 
-    log_info("debloat", &format!("Applying debloat preset: '{}' (dry_run: {})", preset, dry_run));
+    log_info(
+        "debloat",
+        &format!(
+            "Applying debloat preset: '{}' (dry_run: {})",
+            preset, dry_run
+        ),
+    );
 
     // Pre-flight safety: create a native VSS System Restore Point before any
     // high-risk (Balanced/Aggressive) preset mutates the system.
     if !dry_run && matches!(preset, "Balanced" | "Aggressive") {
         let config = crate::core::config::AppConfig::load();
         if config.general.auto_create_restore_point {
-            match crate::restore::vss_point::create_windows_restore_point(&format!("Wino {} preset", preset)) {
+            match crate::restore::vss_point::create_windows_restore_point(&format!(
+                "Wino {} preset",
+                preset
+            )) {
                 Ok(msg) => log_info("debloat", &msg),
-                Err(err) => log_warn("debloat", &format!("VSS restore point unavailable: {}", err)),
+                Err(err) => log_warn(
+                    "debloat",
+                    &format!("VSS restore point unavailable: {}", err),
+                ),
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿use crate::context_menu::scanner::{ContextMenuEntry, HandlerStore};
+use crate::context_menu::scanner::{ContextMenuEntry, HandlerStore};
 use crate::core::logger::{log_error, log_info};
 use crate::core::regutil;
 use crate::restore::snapshots::{create_snapshot_with_string_entry, StringBackupEntry};
@@ -13,17 +13,30 @@ pub fn toggle_handler(entry: &ContextMenuEntry, enable: bool, dry_run: bool) -> 
     let target = format!("{}\\{}", entry.store.hive_label(), entry.key_path);
 
     if entry.is_enabled == enable {
-        return Err(format!("Handler '{}' is already {}", entry.friendly_name, if enable { "enabled" } else { "disabled" }));
+        return Err(format!(
+            "Handler '{}' is already {}",
+            entry.friendly_name,
+            if enable { "enabled" } else { "disabled" }
+        ));
     }
 
     let new_value = if enable {
         format!("{{{}}}", entry.clsid.trim_matches(|c| c == '{' || c == '}'))
     } else {
-        format!("-{{{}}}", entry.clsid.trim_matches(|c| c == '{' || c == '}'))
+        format!(
+            "-{{{}}}",
+            entry.clsid.trim_matches(|c| c == '{' || c == '}')
+        )
     };
 
     if dry_run {
-        log_info("context_menu", &format!("[DRY-RUN] Would {} {} -> default value '{}'", action, target, new_value));
+        log_info(
+            "context_menu",
+            &format!(
+                "[DRY-RUN] Would {} {} -> default value '{}'",
+                action, target, new_value
+            ),
+        );
         return Ok(());
     }
 
@@ -41,11 +54,17 @@ pub fn toggle_handler(entry: &ContextMenuEntry, enable: bool, dry_run: bool) -> 
 
     match regutil::write_string(entry.store.hive(), &full_path(entry), "", &new_value) {
         Ok(()) => {
-            log_info("context_menu", &format!("{}d handler: {} ({})", action, entry.friendly_name, target));
+            log_info(
+                "context_menu",
+                &format!("{}d handler: {} ({})", action, entry.friendly_name, target),
+            );
             Ok(())
         }
         Err(e) => {
-            log_error("context_menu", &format!("Failed to {} {}: {}", action, target, e));
+            log_error(
+                "context_menu",
+                &format!("Failed to {} {}: {}", action, target, e),
+            );
             Err(e)
         }
     }
@@ -66,4 +85,3 @@ pub fn is_entry_enabled_now(entry: &ContextMenuEntry) -> bool {
 fn _assert_store_copy(s: HandlerStore) -> HandlerStore {
     s
 }
-

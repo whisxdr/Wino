@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use windows::core::PCWSTR;
 use windows::Win32::Foundation::ERROR_SUCCESS;
-use windows::Win32::System::Registry::{RegCloseKey, RegOpenKeyExW, RegQueryValueExW, HKEY, HKEY_LOCAL_MACHINE, KEY_READ, REG_SZ};
+use windows::Win32::System::Registry::{
+    RegCloseKey, RegOpenKeyExW, RegQueryValueExW, HKEY, HKEY_LOCAL_MACHINE, KEY_READ, REG_SZ,
+};
 use windows::Win32::System::SystemInformation::{GetNativeSystemInfo, GetTickCount64, SYSTEM_INFO};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -68,12 +70,22 @@ impl SystemInfo {
 }
 
 fn read_processor_name_registry() -> String {
-    let subkey_wide: Vec<u16> = "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0\0".encode_utf16().collect();
+    let subkey_wide: Vec<u16> = "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0\0"
+        .encode_utf16()
+        .collect();
     let mut hkey = HKEY::default();
 
     unsafe {
-        if RegOpenKeyExW(HKEY_LOCAL_MACHINE, PCWSTR(subkey_wide.as_ptr()), 0, KEY_READ, &mut hkey) == ERROR_SUCCESS {
-            let name = read_reg_string(hkey, "ProcessorNameString").unwrap_or_else(|| "Windows Compatible Processor".to_string());
+        if RegOpenKeyExW(
+            HKEY_LOCAL_MACHINE,
+            PCWSTR(subkey_wide.as_ptr()),
+            0,
+            KEY_READ,
+            &mut hkey,
+        ) == ERROR_SUCCESS
+        {
+            let name = read_reg_string(hkey, "ProcessorNameString")
+                .unwrap_or_else(|| "Windows Compatible Processor".to_string());
             let _ = RegCloseKey(hkey);
             name
         } else {
@@ -83,7 +95,9 @@ fn read_processor_name_registry() -> String {
 }
 
 fn read_windows_version_registry() -> (String, String, String) {
-    let subkey_wide: Vec<u16> = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\0".encode_utf16().collect();
+    let subkey_wide: Vec<u16> = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\0"
+        .encode_utf16()
+        .collect();
     let mut hkey = HKEY::default();
 
     unsafe {
@@ -99,7 +113,8 @@ fn read_windows_version_registry() -> (String, String, String) {
             return ("Windows".to_string(), "".to_string(), "".to_string());
         }
 
-        let product_name = read_reg_string(hkey, "ProductName").unwrap_or_else(|| "Windows".to_string());
+        let product_name =
+            read_reg_string(hkey, "ProductName").unwrap_or_else(|| "Windows".to_string());
         let display_version = read_reg_string(hkey, "DisplayVersion").unwrap_or_default();
         let current_build = read_reg_string(hkey, "CurrentBuildNumber").unwrap_or_default();
 
@@ -110,7 +125,10 @@ fn read_windows_version_registry() -> (String, String, String) {
 }
 
 pub fn read_reg_string(hkey: HKEY, value_name: &str) -> Option<String> {
-    let val_name_wide: Vec<u16> = value_name.encode_utf16().chain(std::iter::once(0)).collect();
+    let val_name_wide: Vec<u16> = value_name
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
     let mut val_type = REG_SZ;
     let mut data_size = 0u32;
 
@@ -143,10 +161,8 @@ pub fn read_reg_string(hkey: HKEY, value_name: &str) -> Option<String> {
         }
 
         // Convert UTF-16 bytes to String
-        let u16_slice: &[u16] = std::slice::from_raw_parts(
-            buffer.as_ptr() as *const u16,
-            (data_size as usize) / 2,
-        );
+        let u16_slice: &[u16] =
+            std::slice::from_raw_parts(buffer.as_ptr() as *const u16, (data_size as usize) / 2);
 
         let s = String::from_utf16_lossy(u16_slice);
         Some(s.trim_matches('\0').trim().to_string())

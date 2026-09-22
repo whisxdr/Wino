@@ -4,7 +4,9 @@ use crate::core::regutil;
 use crate::restore::snapshots::list_snapshots;
 
 fn hive_from_label(label: &str) -> windows::Win32::System::Registry::HKEY {
-    use windows::Win32::System::Registry::{HKEY_CLASSES_ROOT, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
+    use windows::Win32::System::Registry::{
+        HKEY_CLASSES_ROOT, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE,
+    };
     match label.to_uppercase().as_str() {
         "HKCU" | "HKEY_CURRENT_USER" => HKEY_CURRENT_USER,
         "HKCR" | "HKEY_CLASSES_ROOT" => HKEY_CLASSES_ROOT,
@@ -22,12 +24,19 @@ pub fn rollback_snapshot(snapshot_id: &str) -> Result<String, String> {
 
     for reg in &snapshot.registry_entries {
         if let Some(prev) = reg.previous_value {
-            let res = SystemExecutor::set_registry_dword(&reg.hive, &reg.path, &reg.value_name, prev, false);
+            let res = SystemExecutor::set_registry_dword(
+                &reg.hive,
+                &reg.path,
+                &reg.value_name,
+                prev,
+                false,
+            );
             if res.success {
                 restored_count += 1;
             }
         } else {
-            let res = SystemExecutor::delete_registry_value(&reg.hive, &reg.path, &reg.value_name, false);
+            let res =
+                SystemExecutor::delete_registry_value(&reg.hive, &reg.path, &reg.value_name, false);
             if res.success {
                 restored_count += 1;
             }
@@ -44,7 +53,13 @@ pub fn rollback_snapshot(snapshot_id: &str) -> Result<String, String> {
         if result.is_ok() {
             restored_count += 1;
         } else {
-            log_warn("restore", &format!("Failed to restore string value '{}\\{}\\{}'", entry.hive, entry.path, entry.value_name));
+            log_warn(
+                "restore",
+                &format!(
+                    "Failed to restore string value '{}\\{}\\{}'",
+                    entry.hive, entry.path, entry.value_name
+                ),
+            );
         }
     }
 
@@ -52,14 +67,20 @@ pub fn rollback_snapshot(snapshot_id: &str) -> Result<String, String> {
     for task in &snapshot.task_entries {
         if task.previous_enabled {
             if let Err(e) = crate::tasks::manager::set_task_enabled(&task.task_path, true, false) {
-                log_warn("restore", &format!("Failed to re-enable task '{}': {}", task.task_path, e));
+                log_warn(
+                    "restore",
+                    &format!("Failed to re-enable task '{}': {}", task.task_path, e),
+                );
             } else {
                 restored_count += 1;
             }
         }
     }
 
-    let msg = format!("Successfully restored {} settings from snapshot '{}'.", restored_count, snapshot.description);
+    let msg = format!(
+        "Successfully restored {} settings from snapshot '{}'.",
+        restored_count, snapshot.description
+    );
     log_info("restore", &msg);
     Ok(msg)
 }

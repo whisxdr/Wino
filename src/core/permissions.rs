@@ -41,7 +41,11 @@ pub fn restart_elevated() -> Result<(), String> {
     }
 
     let current_exe = std::env::current_exe().map_err(|e| e.to_string())?;
-    let exe_wide: Vec<u16> = current_exe.to_string_lossy().encode_utf16().chain(std::iter::once(0)).collect();
+    let exe_wide: Vec<u16> = current_exe
+        .to_string_lossy()
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
     let runas_wide: Vec<u16> = "runas\0".encode_utf16().collect();
 
     unsafe {

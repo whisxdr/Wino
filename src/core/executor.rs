@@ -1,10 +1,11 @@
+use crate::core::logger::{log_error, log_info};
 use windows::core::PCWSTR;
 use windows::Win32::Foundation::ERROR_SUCCESS;
 use windows::Win32::System::Registry::{
     RegCloseKey, RegCreateKeyExW, RegDeleteValueW, RegOpenKeyExW, RegQueryValueExW, RegSetValueExW,
-    HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, KEY_WRITE, REG_DWORD, REG_OPTION_NON_VOLATILE,
+    HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, KEY_WRITE, REG_DWORD,
+    REG_OPTION_NON_VOLATILE,
 };
-use crate::core::logger::{log_error, log_info};
 
 #[derive(Debug, Clone)]
 pub struct ExecutionResult {
@@ -32,7 +33,10 @@ impl SystemExecutor {
         value: u32,
         dry_run: bool,
     ) -> ExecutionResult {
-        let action = format!("Set Registry DWORD: [{}\\{}] {} = {}", hive_str, path, name, value);
+        let action = format!(
+            "Set Registry DWORD: [{}\\{}] {} = {}",
+            hive_str, path, name, value
+        );
 
         if dry_run {
             log_info("executor", &format!("[DRY-RUN] {}", action));
@@ -71,12 +75,18 @@ impl SystemExecutor {
             );
 
             if create_res != ERROR_SUCCESS {
-                log_error("executor", &format!("Failed to open/create registry key: {}\\{}", hive_str, path));
+                log_error(
+                    "executor",
+                    &format!("Failed to open/create registry key: {}\\{}", hive_str, path),
+                );
                 return ExecutionResult {
                     success: false,
                     dry_run: false,
                     action,
-                    details: format!("Failed to open registry key (Win32 Error: {:?})", create_res),
+                    details: format!(
+                        "Failed to open registry key (Win32 Error: {:?})",
+                        create_res
+                    ),
                 };
             }
 
@@ -100,12 +110,18 @@ impl SystemExecutor {
                     details: "Registry value applied successfully.".to_string(),
                 }
             } else {
-                log_error("executor", &format!("Failed to set registry value: {}", name));
+                log_error(
+                    "executor",
+                    &format!("Failed to set registry value: {}", name),
+                );
                 ExecutionResult {
                     success: false,
                     dry_run: false,
                     action,
-                    details: format!("Failed to write registry value (Win32 Error: {:?})", set_res),
+                    details: format!(
+                        "Failed to write registry value (Win32 Error: {:?})",
+                        set_res
+                    ),
                 }
             }
         }
@@ -118,13 +134,7 @@ impl SystemExecutor {
         let mut hkey = HKEY::default();
 
         unsafe {
-            let open_res = RegOpenKeyExW(
-                hive,
-                PCWSTR(path_wide.as_ptr()),
-                0,
-                KEY_READ,
-                &mut hkey,
-            );
+            let open_res = RegOpenKeyExW(hive, PCWSTR(path_wide.as_ptr()), 0, KEY_READ, &mut hkey);
 
             if open_res != ERROR_SUCCESS {
                 return None;
@@ -153,7 +163,12 @@ impl SystemExecutor {
         }
     }
 
-    pub fn delete_registry_value(hive_str: &str, path: &str, name: &str, dry_run: bool) -> ExecutionResult {
+    pub fn delete_registry_value(
+        hive_str: &str,
+        path: &str,
+        name: &str,
+        dry_run: bool,
+    ) -> ExecutionResult {
         let action = format!("Delete Registry Value: [{}\\{}] {}", hive_str, path, name);
 
         if dry_run {
@@ -180,13 +195,7 @@ impl SystemExecutor {
         let mut hkey = HKEY::default();
 
         unsafe {
-            let open_res = RegOpenKeyExW(
-                hive,
-                PCWSTR(path_wide.as_ptr()),
-                0,
-                KEY_WRITE,
-                &mut hkey,
-            );
+            let open_res = RegOpenKeyExW(hive, PCWSTR(path_wide.as_ptr()), 0, KEY_WRITE, &mut hkey);
 
             if open_res != ERROR_SUCCESS {
                 return ExecutionResult {

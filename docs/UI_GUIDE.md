@@ -1,6 +1,10 @@
 # Wino UI & Feature Walkthrough Guide
 
-This guide provides a comprehensive visual and operational overview of all 16 panels in **Wino**. Every screenshot is rendered directly from native application builds to demonstrate real-world behavior, layout architecture, and telemetry data.
+This guide provides a comprehensive visual and operational overview of all 24 panels in **Wino**. Every screenshot is rendered directly from native application builds to demonstrate real-world behavior, layout architecture, and telemetry data.
+
+The sidebar groups the panels into five sections (Overview, Manage, Tune, Optimize, System) so 24 entries stay scannable rather than becoming one long list.
+
+Screenshots for the panels that changed or were added in v2.6 are captured by the documented script on an interactive desktop session. Panels without an embedded image below are described in full but their capture is pending; the script produces `15_network_center.png`, `10_health_center.png`, and `17_` through `24_`.
 
 ---
 
@@ -15,13 +19,21 @@ This guide provides a comprehensive visual and operational overview of all 16 pa
 7. [Privacy & Telemetry Center](#7-privacy--telemetry-center)
 8. [Storage Cleaner](#8-storage-cleaner)
 9. [Context Menu Cleaner](#9-context-menu-cleaner)
-10. [DNS & Network Tools](#10-dns--network-tools)
+10. [Network Center](#10-network-center)
 11. [Scheduled Tasks Debloater](#11-scheduled-tasks-debloater)
 12. [Gaming Optimization Profile](#12-gaming-optimization-profile)
 13. [Windows Health & Diagnostics](#13-windows-health--diagnostics)
 14. [Restore Points & Snapshots](#14-restore-points--snapshots)
 15. [Audit Logs](#15-audit-logs)
 16. [Settings & Preferences](#16-settings--preferences)
+17. [Application Manager](#17-application-manager)
+18. [Profile Engine](#18-profile-engine)
+19. [Power Manager](#19-power-manager)
+20. [Windows Features](#20-windows-features)
+21. [Security Center](#21-security-center)
+22. [Storage Analyzer](#22-storage-analyzer)
+23. [Recommendations](#23-recommendations)
+24. [Before / After Benchmark](#24-before--after-benchmark)
 
 ---
 
@@ -167,21 +179,17 @@ The **Context Menu Cleaner** diagnoses and manages third-party shell extension h
 
 ---
 
-## 10. DNS & Network Tools
-
-![DNS & Network](./screenshots/15_network_dns.png)
+## 10. Network Center
 
 ### Purpose & Architecture
-The **DNS & Network** panel provides rapid network troubleshooting utilities and secure DNS configuration switching for improved privacy, security, and response times.
+The **Network Center** reports adapter state and runs connectivity diagnostics, all through native APIs. Adapter enumeration uses `GetAdaptersAddresses`; ICMP echo uses `IcmpSendEcho`; DHCP renewal uses `IpRenewAddress` and `IpReleaseAddress`; the resolver cache flush uses `DnsFlushResolverCache`. No `ping.exe`, no `ipconfig.exe`, no shell.
 
 ### Key Capabilities
-- **Native DNS Cache Flush**: Calls `DnsFlushResolverCache` directly in `dnsapi.dll` for instant resolver cache purging without console popups.
-- **Verified DNS Presets**:
-  - **Cloudflare DNS**: `1.1.1.1` / `1.0.0.1` (Ultra-low latency, strict privacy)
-  - **Google Public DNS**: `8.8.8.8` / `8.8.4.4` (High reliability, global Anycast routing)
-  - **Quad9**: `9.9.9.9` / `149.112.112.112` (Malware blocking, DNSSEC validation)
-  - **AdGuard DNS**: `94.140.14.14` / `94.140.15.15` (Default ad & tracker blocking)
-- **Automatic DHCP Restoration**: Easily revert adapter DNS configuration to automatic DHCP mode.
+- **Active Adapter Card**: Friendly name, description, link state, DHCP state, IPv4 and IPv6 addresses with prefix lengths, default gateways, DNS servers, and MAC address.
+- **Diagnostic Tools**: Flush DNS, renew DHCP, release DHCP, test gateway, ping host, DNS lookup, connectivity test, latency test, and packet loss.
+- **Worker-Dispatched Probes**: Every diagnostic runs on a worker thread. An ICMP sweep with retries takes seconds; running it on the UI thread would stall the frame loop, which is what the previous version did for the DNS flush.
+- **DNS Presets, Labelled as Presets**: Cloudflare, Google, Quad9, and AdGuard are offered as convenience lists. The panel states plainly that they are not ranked, because which resolver is fastest depends on the network.
+- **Automatic DHCP Restoration**: Selecting "Automatic" removes the static override so the DHCP-assigned resolver takes over again.
 
 ---
 
@@ -213,17 +221,18 @@ The **Gaming Profile** optimizes Windows thread scheduling, GPU priority, and po
 
 ---
 
-## 13. Windows Health & Diagnostics
-
-![Windows Health](./screenshots/10_windows_health.png)
+## 13. System Health Center
 
 ### Purpose & Architecture
-The **Windows Health** panel centralizes official Windows system file integrity verification and component store repair tools.
+The **System Health Center** reports the live state of the checks that matter for Windows stability, and runs the official repair tools on demand. Every check reports what it actually observed; a check that cannot be queried reports `Unknown`, never a fabricated pass.
 
 ### Key Capabilities
-- **System File Checker (SFC)**: Execute asynchronous `sfc /scannow` runs to identify and repair corrupted system files.
-- **DISM Component Store Repair**: Launch `DISM /Online /Cleanup-Image /RestoreHealth` for deep Windows component servicing.
-- **Antivirus & Firewall Diagnostics**: Monitor Windows Defender real-time protection, definition age, and firewall filter status.
+- **Per-Check Verdicts**: Windows Update, Microsoft Defender, Windows Firewall, Base Filtering Engine, RPC, pending reboot, system drive space, component store, and system file integrity, each with `Healthy`, `Attention`, `Warning`, `Critical`, or `Unknown`.
+- **Windows Update Is a Real Query**: The service state is read from the Service Control Manager. The previous version reported it as healthy without checking.
+- **Problems First**: Non-healthy checks are lifted above the full list, ordered by severity, so a stopped core service does not require scrolling.
+- **Unknowns Are Counted and Named**: When checks could not be queried, the count is shown next to the overall rating, because a report that says "Healthy" while two checks were unreadable would be the exact failure this center exists to prevent.
+- **SFC and DISM on Workers**: Run SFC, DISM CheckHealth, and DISM ScanHealth from the panel. Output is captured, shown in the view, and written to the audit log. These tools take minutes, so they never run on the UI thread.
+- **Elevation Disclosed Up Front**: When administrator privileges are required and absent, the panel says so before the user presses a button.
 
 ---
 
@@ -268,6 +277,118 @@ The **Settings** panel manages application appearance, bilingual localization, e
 - **Privilege Elevation**: Inspect current security token (`Admin • Elevated` vs `Standard User`) and trigger UAC restart when administrator privileges are required.
 - **Auto Memory Trimmer Configuration**: Enable automated memory trimming with adjustable RAM threshold percentage and cooldown intervals.
 
+## 17. Application Manager
+
+### Purpose & Architecture
+The **Application Manager** presents one list across four package sources, because a user looking for "what is installed" does not care which subsystem installed it. Records come from the classic `Uninstall` registry keys, the Microsoft Store / AppX package store, provisioned AppX packages, and Winget.
+
+### Key Capabilities
+- **Unified Discovery**: Win32 installed programs, Microsoft Store packages, provisioned AppX packages, and Winget-known packages in a single searchable list.
+- **Full Record Per Application**: Display name, publisher, version, install location, install size, install date, package type, source, signature state, and uninstall availability.
+- **Search, Filter, Sort**: Free-text search across name, publisher, and path; source filter chips (All / Win32 / Microsoft Store / AppX / Winget); sort by name, publisher, size, install date, or version.
+- **Honest Uninstall Availability**: An application with no removal path shows **"Uninstall unavailable"** instead of a button that cannot work. The record knows its own removal method: a quiet uninstall command, an MSI product code, a plain uninstall command, or an AppX package.
+- **Winget as an Optional Provider**: The update section reports available updates with a state badge (Update Available, Latest, Unknown). When Winget is absent the panel says so and explains that only update checks need it; the rest of Wino is unaffected.
+- **Confirmed Removal**: Uninstall runs the application's own uninstaller after a confirmation that states it is irreversible and that a snapshot is taken first.
+
+---
+
+## 18. Profile Engine
+
+### Purpose & Architecture
+The **Profile Engine** composes existing Wino operations into named, reviewable bundles. A profile step names an operation that already exists (a debloat rule, a service change, a power plan), so applying a profile routes through the same Safety Engine, snapshots, and audit log as applying that operation by hand. A profile can never bypass the engine.
+
+### Key Capabilities
+- **Six Built-In Profiles**: Balanced, Gaming, Performance, Battery Saver, Privacy, and Low RAM. Each states what it does and, explicitly, what it does not do.
+- **Custom Profiles**: Duplicate a built-in to customise it, or import one from TOML. Built-ins cannot be deleted; the panel says why and points at Duplicate.
+- **Step Grouping**: Steps are grouped by kind (Registry, Service, Power, Scheduled Task, Memory, Visual Effects, Privacy, Startup) so a long profile stays readable.
+- **Safety Preview**: The Preview action renders the exact `OperationDescriptor` set the Safety Engine validates: risk badge, reversibility, administrator requirement, restart requirement, and current and target state.
+- **Disclosed Blocked Steps**: Steps the Safety Engine will hard-block are named on the card before Apply is pressed, so the user confirms what will actually run.
+- **Honest Results**: A profile application reports applied, failed, and skipped counts separately. A partial application is reported as partial.
+
+---
+
+## 19. Power Manager
+
+### Purpose & Architecture
+The **Power Manager** reports the active power plan and exposes the advanced settings a user can safely change. Plans are addressed by GUID, because that is how the Windows power API identifies them; names come from Windows itself so a localized install shows its own wording.
+
+### Key Capabilities
+- **Active Plan Card**: The active scheme's name, its category, and its GUID.
+- **Plan Switching**: Balanced, High Performance, Power Saver, Ultimate Performance, plus any custom scheme present on the machine. Switching is confirmed and snapshotted.
+- **Ultimate Performance, Honestly Handled**: The scheme does not exist on a stock install. The panel says so and offers a button that *creates* it, with the copy making clear that activating it is a separate step.
+- **Advanced Settings with AC and DC**: Processor minimum and maximum state, processor boost behavior, sleep and display timeouts, USB selective suspend, PCI Express link state, and disk idle timeout.
+- **No Control for Unexposed Settings**: A setting the active scheme does not expose renders explanatory text and no control at all. A slider bound to an unreadable value would display and write back a fabricated number.
+- **Verified Writes**: Each write records the previous AC/DC values in a snapshot, applies the change, and re-reads it. A write that did not take effect returns an error rather than reporting success.
+
+---
+
+## 20. Windows Features
+
+### Purpose & Architecture
+The **Windows Features** panel lists optional Windows components with their state and dependencies. State is read and changed through `dism.exe`, the documented interface for optional components; the crate exposes no DISM API surface.
+
+### Key Capabilities
+- **State and Dependencies**: `Enabled`, `Disabled`, `Requires Reboot`, or `Unknown`, plus the dependency list.
+- **Curated Risk and Impact**: Components that materially change system behavior carry an explicit warning that is rendered inline, not hidden behind a tooltip: Hyper-V, Virtual Machine Platform, Windows Sandbox, OpenSSH Server, IIS, Telnet, PowerShell 2.0, and others.
+- **Dependency Disclosure**: Dependencies that DISM would enable implicitly are named before you confirm, so Windows does not add them silently.
+- **No Dead Buttons**: A feature in a state Wino cannot toggle renders as text, never as a disabled button. "Unknown" is a result, not a failure.
+- **High-Risk Features Are Marked**: OpenSSH Server and IIS are rated High risk because they install services and open network listeners.
+
+---
+
+## 21. Security Center
+
+### Purpose & Architecture
+The **Security Center** reports protection state across Microsoft Defender, Windows Firewall, Secure Boot, TPM, UAC, SmartScreen, Windows Update, and critical security services. It reports state and nothing else.
+
+### Key Capabilities
+- **Protection Status Per Component**: Each component shows its state (`On`, `Off`, `Warning`, `Unknown`) with the detail behind the verdict.
+- **Warnings Are Prominent**: A disabled protection is lifted to the top of the panel and tagged as disabled outside Wino. It is the one thing on this page the user must not have to scroll to find.
+- **Unknown Is a Real Result**: A component that could not be queried is listed as `Unknown`, not silently omitted and not assumed healthy.
+- **No Disable Path**: Wino exposes no mechanism to turn a security protection off as an optimization. The panel states this unconditionally, because the absence of a toggle is only reassuring when it is stated.
+- **TPM Version**: When a TPM is present, its specification version is shown alongside the state.
+
+---
+
+## 22. Storage Analyzer
+
+### Purpose & Architecture
+The **Storage Analyzer** answers where the space on the system drive went. It is read-only by construction: nothing in this panel deletes a file. Reclaiming space still goes through the Storage Cleaner and its safety workflow.
+
+### Key Capabilities
+- **Usage by Category**: Applications, Windows, Users, ProgramData, Temp, and Other, each with its measured size and share.
+- **Directory Breakdown**: The largest directories with their recursive size, file count, and share of the parent. Directories are classified by whole path component, so `C:\WindowsApps` is not mistaken for `C:\Windows`.
+- **Large and Old Files**: Files above the configured size threshold and files above the configured age threshold, each with size and age. A file whose timestamp cannot be read is never reported as old.
+- **Cache Locations**: The paths the Storage Cleaner targets, measured, with a pointer to the Cleaner rather than a delete button.
+- **Partial Scans Say So**: A scan that hit the entry limit, was cancelled, or skipped inaccessible paths and reparse points discloses all of it. The analyzer never follows a reparse point, so a junction loop cannot trap the walk.
+- **Cancellable**: A long scan can be stopped from the panel and reports the partial results it gathered.
+
+---
+
+## 23. Recommendations
+
+### Purpose & Architecture
+The **Recommendations** panel reports measured observations about this machine across RAM, commit charge, startup impact, optional services, reclaimable temporary data, power plan, privacy state, security state, update state, disk space, and pending packages.
+
+### Key Capabilities
+- **Every Card Carries Its Number**: Each recommendation shows the measured value it is based on. A recommendation without its number is indistinguishable from a guess.
+- **Severity and Area Badges**: High, Medium, Low, or Info, plus the subsystem the observation concerns.
+- **Review, Never Apply**: Every card has a Review action that opens the view where the change would be made. There is no apply button here at all, and the panel states that plainly.
+- **Absence of Evidence Is Not a Problem**: An unqueryable check produces no recommendation. A machine with nothing to report shows an explicit "nothing needs attention" state, which is a valid result rather than a failed scan.
+
+---
+
+## 24. Before / After Benchmark
+
+### Purpose & Architecture
+The **Before / After Benchmark** captures measured system state and compares two captures. It reports measured deltas only: there is no estimated-performance field anywhere, because any such number would be derived rather than measured.
+
+### Key Capabilities
+- **Captured Metrics**: Idle RAM used, process count, startup entry count, temporary data size, active power plan, selected service states, and selected privacy states.
+- **Explicit Selection**: Two captures are selected for comparison rather than comparing the newest two automatically, so a comparison is always between states the user chose.
+- **Measured Deltas**: Each row shows the before value, the after value, and the change, coloured by direction. Service and privacy state changes are listed individually.
+- **Read-Only Capture**: Taking a capture changes nothing. A "before" capture taken mid-experiment does not perturb the machine.
+
 ---
 
 ## Capturing Documentation Screenshots
@@ -278,7 +399,7 @@ To re-capture all UI screenshots synchronously across every tab after visual upd
 powershell -ExecutionPolicy Bypass -File scripts\capture.ps1
 ```
 
-This compiles the standalone `capture_screenshots` binary, pre-loads realistic system state, steps through all 16 navigation tabs, captures pixel-perfect native frames, and converts them to optimized PNG files in `docs/screenshots/`.
+This compiles the standalone `capture_screenshots` binary, pre-loads realistic system state, steps through all 24 navigation tabs, captures pixel-perfect native frames, and converts them to optimized PNG files in `docs/screenshots/`.
 
 ---
 

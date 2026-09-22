@@ -13,7 +13,12 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 /// Pure decision logic (unit-testable): should we trim now?
-pub fn should_trim(usage_pct: f32, threshold_pct: f32, since_last_trim: Duration, cooldown: Duration) -> bool {
+pub fn should_trim(
+    usage_pct: f32,
+    threshold_pct: f32,
+    since_last_trim: Duration,
+    cooldown: Duration,
+) -> bool {
     if usage_pct < threshold_pct {
         return false;
     }
@@ -102,7 +107,10 @@ impl AutoTrimHandle {
 
         spawned.as_ref()?;
 
-        Some(Self { enabled: flag_enabled, threshold_pct: threshold, stop })
+        Some(Self {
+            enabled: flag_enabled,
+            threshold_pct: threshold,
+            stop,
+        })
     }
 }
-

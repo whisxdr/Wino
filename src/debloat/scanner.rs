@@ -34,18 +34,15 @@ pub fn scan_debloat_items() -> Vec<ScannedDebloatItem> {
 
         for reg in &rule.registry_keys {
             has_reg = true;
-            let current = SystemExecutor::read_registry_dword(&reg.hive, &reg.path, &reg.value_name);
+            let current =
+                SystemExecutor::read_registry_dword(&reg.hive, &reg.path, &reg.value_name);
             if current != Some(reg.value_data) {
                 all_reg_applied = false;
                 break;
             }
         }
 
-        let is_applied = if has_reg {
-            all_reg_applied
-        } else {
-            false
-        };
+        let is_applied = if has_reg { all_reg_applied } else { false };
 
         let status_text = if is_applied {
             "Optimized / Inactive".to_string()

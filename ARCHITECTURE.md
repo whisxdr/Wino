@@ -34,6 +34,16 @@ graph TD
         Win32Exec --> Tasks[Scheduled Tasks Manager Engine]
         Win32Exec --> Game[Gaming Profile Optimizer Engine]
         Win32Exec --> Health[Integrity & Defender Engine]
+        Win32Exec --> Apps[Application Manager: Win32 / Store / AppX / Winget]
+        Win32Exec --> Prof[Profile Engine: composable operations]
+        Win32Exec --> Power[Power Manager: schemes & advanced settings]
+        Win32Exec --> Feat[Windows Features Manager]
+        Win32Exec --> NetC[Network Center & Native Diagnostics]
+        Win32Exec --> Store[Storage Analyzer: read-only]
+        Win32Exec --> HealthC[System Health Center]
+        Win32Exec --> Sec[Security Center: report-only]
+        Win32Exec --> Rec[Recommendation Engine: observation-only]
+        Win32Exec --> Bench[Before / After Benchmark]
     end
     
     subgraph Windows Kernel & System Subsystems
@@ -60,7 +70,27 @@ Wino eliminates intermediate shells entirely by binding directly to the Windows 
 | **Service Status & Config** | `Get-Service` / `Set-Service` | Windows Service Control Manager (`OpenSCManagerW`) | **800 ms → 1.2 ms** (660x faster) |
 | **DNS Cache Flush** | `Clear-DnsClientCache` via PowerShell | Direct `DnsFlushResolverCache` via `dnsapi.dll` | **1,200 ms → 0.4 ms** (3,000x faster) |
 
-### 2.2 Process Subsystem & Dual GUI/CLI Routing
+### 2.2 Subprocess Policy
+
+Wino is Win32-first: everything that has a practical native API is done through
+that API. A small, fixed set of operations genuinely has none, and those are
+routed through `core::proc`, which enforces the same contract for every call:
+the console window is never shown (`CREATE_NO_WINDOW`), stdout and stderr are
+captured with a length cap, the exit code is inspected and reported as a
+structured error, `dry_run` short-circuits before any spawn, and no shell is
+ever involved (`Command::new(program)` with an argument vector, never a command
+string).
+
+| Tool | Why a subprocess is required |
+| :--- | :--- |
+| `dism.exe` | Enumerating and changing optional Windows features. The crate exposes no DISM API surface (`Win32_System_ApplicationInstallationAndServicing` is the MSI surface), and the CLI is the documented interface. |
+| `schtasks.exe` | Toggling an existing task's `Enabled` flag. No public native API does this without rewriting the XML definition, which would lose trigger state. |
+| `powercfg.exe` | Duplicating a power scheme to create Ultimate Performance. Not exposed by the power API surface in the crate. Called only on explicit request. |
+| `winget.exe` | Third-party package manager; ships as a CLI only. Entirely optional — Wino is fully functional without it. |
+| `sfc.exe` | Repairs the component store in its own process context. |
+| `powershell.exe` | **One** call site: removing an AppX package. There is no AppX deployment COM interface exposed by the crate. Isolated in `apps/uninstall.rs` with the reason documented at the call site. |
+
+### 2.3 Process Subsystem & Dual GUI/CLI Routing
 - The binary is compiled with `#![windows_subsystem = "windows"]` to ensure a clean desktop launch without flashing terminal windows.
 - For headless CLI invocations (e.g. `wino scan`, `wino memory status`), Wino dynamically detects the parent console session via `AttachConsole(ATTACH_PARENT_PROCESS)` and routes formatted standard streams to `CONOUT$`.
 
@@ -85,13 +115,16 @@ wino/
 │   │   ├── theme.rs            # Fluent theme palette, visuals, and native Segoe fonts
 │   │   ├── navigation.rs       # Sidebar tab buttons with dedicated 22px icon containers
 │   │   ├── components.rs       # Reusable UI widgets: metric cards, badges, section headers
-│   │   └── views/              # 16 dedicated view modules (Dashboard, Memory, Debloat, etc.)
+│   │   └── views/              # 24 dedicated view modules
 │   ├── core/                   # Foundation layer
-│   │   ├── config.rs           # TOML configuration serialization
-│   │   ├── executor.rs         # Safe Win32 execution engine (Registry, Commands, Dry-run)
+│   │   ├── cancel.rs           # Cooperative cancellation token for long scans
+│   │   ├── config.rs           # TOML configuration serialization (serde-defaulted per section)
+│   │   ├── executor.rs         # Safe Win32 execution engine (Registry, Dry-run)
 │   │   ├── i18n.rs             # Bilingual localization dictionary (EN / ID) with parity tests
 │   │   ├── logger.rs           # Circular in-memory audit log buffer
-│   │   ├── safety.rs           # Risk gating engine (Safe, Low, Medium, High, Critical)
+│   │   ├── proc.rs             # Isolated subprocess runner (hidden console, captured output)
+│   │   ├── regutil.rs          # Thin registry helpers (enum, read/write/delete string values)
+│   │   ├── safety.rs           # Risk gating engine + OperationDescriptor disclosure model
 │   │   └── system.rs           # OS version, build, processor architecture, admin detection
 │   ├── memory/                 # Advanced memory monitoring and working set optimization
 │   │   ├── pressure.rs         # Multi-metric RAM pressure calculation algorithm
@@ -120,11 +153,32 @@ wino/
 │   ├── cleaner/                # Safe disk space cleaner with age heuristics
 │   ├── gaming/                 # Gaming profile (Power plan, Game Mode, GPU priority)
 │   ├── health/                 # SFC, DISM, Defender, and Windows Update diagnostics
+│   │   ├── center.rs           # Health Center: per-check verdicts, Unknown never becomes Healthy
+│   │   └── update.rs           # Real wuauserv query (was hard-coded before v2.6)
 │   ├── restore/                # JSON configuration snapshots & System Restore integration
-│   ├── security/               # Authenticode signature verification & validation
+│   ├── security/               # Authenticode verification, plus the report-only Security Center
+│   ├── apps/                   # v2.6 Application Manager
+│   │   ├── models.rs           # AppRecord, source/uninstall classification (pure, tested)
+│   │   ├── scanner.rs          # Win32 registry + AppX package enumeration
+│   │   ├── manager.rs          # Filter, sort, update correlation, open location
+│   │   ├── winget.rs           # Optional Winget provider (table parser is pure, tested)
+│   │   └── uninstall.rs        # Removal dispatch; the single PowerShell call site
+│   ├── profiles/               # v2.6 Profile Engine
+│   │   ├── models.rs           # Profile, ProfileStep, apply report (pure, tested)
+│   │   ├── builtins.rs         # Six built-in profiles composed from existing operations
+│   │   └── manager.rs          # Load/save/apply/preview/export/import
+│   ├── power/                  # v2.6 Power Manager
+│   │   ├── models.rs           # PowerPlan, PowerSetting, scheme GUIDs (pure, tested)
+│   │   ├── manager.rs          # Enumerate/activate schemes, create Ultimate Performance
+│   │   └── settings.rs         # Read/write AC+DC advanced settings with verification
+│   ├── windows_features/       # v2.6 Windows Features Manager
+│   ├── storage/                # v2.6 Storage Analyzer (read-only by construction)
+│   ├── recommendations/        # v2.6 recommendation engine (observation-only)
+│   ├── benchmark/              # v2.6 before/after capture and comparison
 │   └── cli/                    # Headless CLI argument parser and commands
 └── tests/
-    └── core_tests.rs           # Automated unit and integration test suite (16 tests)
+    ├── core_tests.rs           # v2.5 subsystem regression suite (21 tests)
+    └── v26_tests.rs            # v2.6 subsystem suite (63 tests)
 ```
 
 ---
@@ -150,6 +204,47 @@ stateDiagram-v2
     RecordAuditLog --> [*]: Success
 ```
 
+### Operation Disclosure
+
+Every mutating operation in Wino describes itself with an
+`OperationDescriptor` before it runs, and the shared confirmation dialog reads
+those fields from the descriptor rather than from the calling view. That is what
+keeps a registry write, a service change, a power setting, a package removal,
+and a profile application disclosing the same information:
+
+| Field | Purpose |
+| :--- | :--- |
+| `risk` | The `RiskLevel` the Safety Engine validates against |
+| `reversible` | Whether the change can be undone |
+| `requires_admin` | Whether elevation is needed (checked against the live token) |
+| `requires_reboot` | Whether a restart is needed for the change to take effect |
+| `supported_windows` | Which Windows versions the operation applies to |
+| `current_state` / `target_state` | What is observed now and what the operation produces |
+| `component` | What is being touched, e.g. `Service: DiagTrack` |
+
+The GUI renders one confirmation dialog for the whole application
+(`WinoApp::render_confirmation`). No view applies a mutating action directly: it
+stages a `PendingConfirm`, and the dialog dispatches it. The CLI reaches the same
+operations through the same functions, so both interfaces exercise identical
+logic.
+
+### Report-Only Subsystems
+
+Three v2.6 subsystems deliberately have no apply path at all:
+
+* **Security Center** reports protection state and offers no way to turn a
+  protection off. A disabled protection is a warning, never an opportunity.
+* **Storage Analyzer** deletes nothing. Reclaiming space routes through the
+  Storage Cleaner and its safety workflow.
+* **Recommendation Engine** produces observations. Every recommendation opens its
+  own view for review; nothing is applied automatically.
+
+A related rule applies to every state query in these subsystems: when a check
+cannot be queried, the result is `Unknown`. It is never folded into a healthy
+verdict. The v2.6 release fixes the one place where this rule was violated — the
+health dashboard reported Windows Update service health as `true` without
+querying the service.
+
 ### Risk Classification Matrix
 1. **`Safe`**: Non-destructive, zero risk of feature breakage. Fully reversible without system reboot (e.g. Disabling Advertising ID, disabling Bing search in Start Menu).
 2. **`Low`**: Modifies optional background components (e.g. Windows 11 Widgets news feed, Copilot side panel, Xbox background services for non-gamers).
@@ -163,17 +258,36 @@ stateDiagram-v2
 
 Before applying any preset or batch modification, Wino automatically serializes a point-in-time configuration snapshot to disk:
 
-1. **Pre-Flight Snapshot Generation**:
-   - Records current registry DWORD / String values across all modified hives.
-   - Records current service startup states (`Automatic`, `Manual`, `Disabled`).
-   - Records context menu CLSID states and scheduled task XML definitions.
-   - Persists timestamped JSON snapshot to `%APPDATA%\Wino\snapshots\<id>.json`.
-2. **Atomic Execution**:
-   - Executes target modifications via direct Win32 APIs.
+1. **Pre-Flight Snapshot Generation**. A snapshot covers seven categories:
+   - Registry DWORD and REG_SZ values across all modified hives.
+   - Service startup states (`Automatic`, `Manual`, `Disabled`).
+   - Context menu CLSID states.
+   - Scheduled tasks, including the **full XML definition**, not just an enabled
+     flag. Restoring a task reliably needs its original triggers and actions,
+     and a boolean cannot rebuild them. A task whose XML is ACL-restricted is
+     recorded as "XML not readable" rather than silently storing nothing.
+   - Power settings, with the previous AC and DC values.
+   - Network settings, with the previous value per interface.
+   - Profile applications, with the step ids that were applied.
+   - Persisted as timestamped JSON to `%APPDATA%\Wino\snapshots\<id>.json`.
+2. **Execution**:
+   - Executes target modifications through the shared executor.
    - Streams operational telemetry to the in-memory circular audit buffer and live event ticker.
-3. **One-Click Rollback**:
-   - Users can inspect snapshot history at any time in the **Restore Points** view.
-   - Restoring a snapshot rewrites all prior registry entries, service startups, and shell handlers to their exact recorded state.
+3. **Validation and Honest Reporting**:
+   - Power writes are re-read after writing. A write that did not take effect
+     returns an error instead of reporting success.
+   - A profile application records one outcome per step and distinguishes a
+     failure from a safety-skip. A partial result is reported as partial; the
+     CLI exits non-zero for it.
+   - A rollback counts each restored value and logs the ones that failed. It
+     never reports complete success for a partial restore.
+4. **One-Click Rollback**:
+   - Snapshot history is inspectable at any time in the **Restore Points** view,
+     which lists the exact recorded restore set per snapshot.
+   - Each snapshot reports its operation count and affected categories, and a
+     snapshot that recorded nothing renders as "nothing to restore" rather than
+     presenting an empty rollback as a safety net.
+   - Restoring rewrites every recorded value to its exact prior state.
 
 ---
 

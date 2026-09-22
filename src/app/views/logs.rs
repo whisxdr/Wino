@@ -38,7 +38,11 @@ pub fn render(ui: &mut Ui, _state: &mut AppState) {
         } else {
             for entry in entries.iter().rev() {
                 ui.horizontal_wrapped(|ui| {
-                    ui.label(RichText::new(&entry.timestamp).size(10.5).color(colors.text_muted));
+                    ui.label(
+                        RichText::new(&entry.timestamp)
+                            .size(10.5)
+                            .color(colors.text_muted),
+                    );
 
                     let lvl_rgb = match entry.level.as_str() {
                         "ERROR" => (239, 68, 68),
@@ -46,12 +50,19 @@ pub fn render(ui: &mut Ui, _state: &mut AppState) {
                         _ => (78, 222, 163),
                     };
                     status_badge(ui, &entry.level, lvl_rgb);
-                    ui.label(RichText::new(format!("[{}]", entry.target)).size(11.0).color(colors.accent));
-                    ui.label(RichText::new(&entry.message).size(12.0).color(colors.text_primary));
+                    ui.label(
+                        RichText::new(format!("[{}]", entry.target))
+                            .size(11.0)
+                            .color(colors.accent),
+                    );
+                    ui.label(
+                        RichText::new(&entry.message)
+                            .size(12.0)
+                            .color(colors.text_primary),
+                    );
                 });
                 ui.add_space(4.0);
             }
         }
     });
 }
-

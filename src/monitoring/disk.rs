@@ -25,7 +25,10 @@ pub fn get_primary_disk_stats() -> DiskStats {
             Some(&mut free_bytes_available),
             Some(&mut total_bytes),
             Some(&mut total_free_bytes),
-        ).is_ok() && total_bytes > 0 {
+        )
+        .is_ok()
+            && total_bytes > 0
+        {
             let used_bytes = total_bytes.saturating_sub(total_free_bytes);
             let usage_pct = (used_bytes as f32 / total_bytes as f32) * 100.0;
 
